@@ -1,34 +1,33 @@
 import pandas as pd
 
 class RouteData:
-    def __init__(self, file_path: str):
-        """
-        Initialisiert die RouteData-Klasse und lädt die CSV-Daten.
-        """
-        self.file_path = file_path
-        self.data = None
+    """Klasse zum Einlesen und Verwalten der GPS-Routendaten."""
 
-    def load_data(self):
-        """
-        Lädt die GPS-Daten aus der CSV-Datei in einen Pandas DataFrame.
-        """
-        print(f"Lade Daten von {self.file_path}...")
-        # Die Daten sind mit Semikolon getrennt, daher sep=';'
+    def __init__(self, file_path: str) -> None:
+        self.file_path = file_path
+        # Daten werden erst beim Aufruf von load_data() geladen
+        self.data = None 
+
+    def load_data(self) -> None:
+        print(f"Lese CSV aus: {self.file_path}")
+        
+        # sep=';' da die GPS-Daten mit ; getrennt sind
         self.data = pd.read_csv(self.file_path, sep=';')
         
-        # Den Zeitstempel in ein echtes Datum/Zeit-Format umwandeln
+        # String-Zeitstempel in echte datetime-Objekte umwandeln
+        # (Wichtig für die spätere Berechnung von delta t)
         self.data['time'] = pd.to_datetime(self.data['time'])
         
-        print("Daten erfolgreich geladen!")
-        print(self.data.head()) # Zeigt die ersten 5 Zeilen an
+        print("Daten erfolgreich geladen.")
 
-# === Hauptprogramm ===
+
 if __name__ == "__main__":
     
-    datei_pfad = "final_project_input_data.csv" 
+    # Pfad für die CSV Daten
+    path = "data/final_project_input_data.csv" 
     
-    # Ein Objekt unserer Klasse erstellen
-    meine_route = RouteData(datei_pfad)
+    route = RouteData(path)
+    route.load_data()
     
-    # Die Methode zum Laden aufrufen
-    meine_route.load_data()
+    # Test ob Daten richtig sind
+    print(route.data.head())
