@@ -1,5 +1,5 @@
 import logging
-from route_data import RouteData
+from src.calculations.route_data_kinematics import RouteData
 
 logging.basicConfig(format="%(asctime)s:%(levelname)s: %(message)s",
                     level=logging.INFO,)

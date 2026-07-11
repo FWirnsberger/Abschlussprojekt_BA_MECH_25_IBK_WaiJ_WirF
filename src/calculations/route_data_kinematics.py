@@ -1,6 +1,6 @@
 import pandas as pd
 import logging
-from geo_utils import GeoUtils
+from src.calculations.geo_utils import GeoUtils
 
 class RouteData:
     """Klasse zum Einlesen und Verwalten der GPS-Routendaten."""
