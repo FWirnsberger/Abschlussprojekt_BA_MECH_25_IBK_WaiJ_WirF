@@ -1,4 +1,10 @@
+import logging
 from route_data import RouteData
+
+logging.basicConfig(format="%(asctime)s:%(levelname)s: %(message)s",
+                    level=logging.INFO,)
+ #                   filename="app.log")
+ # fürs fertige Programm in die File app.log alle Meldungen schreiben
 
 def main():
     

@@ -1,4 +1,5 @@
 import pandas as pd
+import logging
 from geo_utils import GeoUtils
 
 class RouteData:
@@ -10,21 +11,21 @@ class RouteData:
         self.data = None 
 
     def load_data(self) -> None:
-        print(f"Lese CSV aus: {self.file_path}")
+        logging.info(f"Lese CSV aus: {self.file_path}")
         # sep=';' da die GPS-Daten mit ; getrennt sind
         self.data = pd.read_csv(self.file_path, sep=';')
         # String-Zeitstempel in echte datetime-Objekte umwandeln
         # (Wichtig für die spätere Berechnung von delta t)
         self.data['time'] = pd.to_datetime(self.data['time'])
-        print("Daten erfolgreich geladen.")
+        logging.info("Daten erfolgreich geladen.")
 
     def calculate_kinematics(self) -> None:
         """Berechnet Distanz, Geschwindigkeit, Beschleunigung und Steigung zwischen den GPS-Punkten."""
         if self.data is None:
-            print("Fehler: Keine Daten geladen!")
+            logging.error("Fehler: Keine Daten geladen!")
             return
 
-        print("Berechne Kinematik (Distanz, Geschwindigkeit, Beschleunigung, Steigung): ")
+        logging.info("Berechne Kinematik (Distanz, Geschwindigkeit, Beschleunigung, Steigung): ")
         
         # Listen zum Speichern der Ergebnisse (start bei 0.0)
         distances = [0.0]
@@ -84,4 +85,8 @@ class RouteData:
         self.data['acceleration_m_s2'] = accelerations
         self.data['slope'] = slopes
         
-        print("Kinematik erfolgreich berechnet.")
+        logging.info("Kinematik erfolgreich berechnet.")
+
+def get_data(self) -> pd.DataFrame:
+        """Gibt das berechnete DataFrame zurück. (Datenkapselung)"""
+        return self.data
