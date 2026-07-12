@@ -120,6 +120,26 @@ class RouteData:
         logging.info(f"Gesamte Strecke wurde berechnet.")
 
         return total_distance
+    
+    def calculate_total_time(self)-> float:
+        """
+        Berechnung der gesamten Fahrzeit
+        """
+
+        #Fehlererkennung 
+        if self.data is None:
+            logging.error("Fehler: Keine Daten geladen!")
+            return 0.0
+        
+        #gesamte Zeit mit dem ersten und letzten Zeitstempel der CSV-Datei berechnen
+        #"time geht auf die Spalte, iloc auf die nötige Zeile"
+        start_time = self.data["time"].iloc[0]
+        end_time = self.data["time"].iloc[-1]
+
+        total_time = (end_time - start_time).total_seconds()
+        logging.info("gesamt Fahrzeit berechnet.")
+
+        return total_time
 
 
 def get_data(self) -> pd.DataFrame:
