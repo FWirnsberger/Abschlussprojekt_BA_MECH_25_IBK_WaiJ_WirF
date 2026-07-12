@@ -1,6 +1,6 @@
 import pandas as pd
 import logging
-from src.calculations.geo_utils import GeoUtils
+from src.models.gps_point import GPSPoint
 
 class RouteData:
     """Klasse zum Einlesen und Verwalten der GPS-Routendaten."""
@@ -9,6 +9,7 @@ class RouteData:
         self.file_path = file_path
         # Daten werden erst beim Aufruf von load_data geladen
         self.data = None 
+        self._points = []
 
     def load_data(self) -> None:
         logging.info(f"Lese CSV aus: {self.file_path}")
@@ -17,7 +18,21 @@ class RouteData:
         # String-Zeitstempel in echte datetime-Objekte umwandeln
         # (Wichtig für die spätere Berechnung von delta t)
         self.data['time'] = pd.to_datetime(self.data['time'])
-        logging.info("Daten erfolgreich geladen.")
+        logging.info("GPSPoint-Objekte erstellen aus der CSV")
+        self._points = []
+
+        # jede zeile wird durchgegangen und ein objekt erstellt
+        for index, row in self.data.iterrows():
+            punkt = GPSPoint(
+                lat=row['lat'],
+                lon=row['lon'],
+                ele=row['ele'],
+                time=row['time'],
+                temp=row['temperature']
+            )
+            self._points.append(punkt)
+            
+        logging.info(f"{len(self._points)} GPSPoint-Objekte erfolgreich geladen.")
 
     def calculate_kinematics(self) -> None:
         """Berechnet Distanz, Geschwindigkeit, Beschleunigung und Steigung zwischen den GPS-Punkten."""
@@ -33,24 +48,22 @@ class RouteData:
         accelerations = [0.0]
         slopes = [0.0]
         
-        # Wir iterieren durch die Tabelle ab der zweiten Zeile (index 1)
+        # Wir iterieren durch die Tabelle ab der zweiten zeile (start index 1)
         for i in range(1, len(self.data)):
-            # Koordinaten von Punkt A (vorheriger Punkt)
-            lat1 = self.data.loc[i-1, 'lat']
-            lon1 = self.data.loc[i-1, 'lon']
+            p_prev = self._points[i-1] # Der vorherige Punkt A
+            p_curr = self._points[i]   # Der aktuelle punkt B
             
-            # Koordinaten von Punkt B (aktueller Punkt)
+            # Koordinaten von Punkt B
             lat2 = self.data.loc[i, 'lat']
             lon2 = self.data.loc[i, 'lon']
             
             # Distanz [m] (ds)
-            ds = GeoUtils.haversine_distance(lat1, lon1, lat2, lon2)
+            # Punkt A berechnet die Distanz zu Punkt B
+            ds = p_prev.get_distance_to(p_curr)
             distances.append(ds)
             
             # Zeitdifferenz [s] (dt)
-            time1 = self.data.loc[i-1, 'time']
-            time2 = self.data.loc[i, 'time']
-            dt = (time2 - time1).total_seconds()
+            dt = p_prev.get_time_difference_to(p_curr)
             
             # Geschwindigkeit [m/s] (v = ds / dt)
             if dt > 0:
@@ -60,7 +73,7 @@ class RouteData:
                 
             speeds.append(v)
 
-            # Beschleunigung (a) [m/s^2] (a = (v_aktuell - v_vorher) / dt)
+            # Beschleunigung (a) [m/s^2] (a = (v - v_prev) / dt)
             v_prev = speeds[i-1]
             if dt > 0:
                 a = (v - v_prev) / dt
@@ -69,9 +82,8 @@ class RouteData:
             accelerations.append(a)
             
             # Steigung
-            h1 = self.data.loc[i-1, 'ele'] 
-            h2 = self.data.loc[i, 'ele']
-            dh = h2 - h1
+            # mit Getter (.ele), um höhe abzufragen
+            dh = p_curr.ele - p_prev.ele
             
             if ds > 0:
                 slope = dh / ds  
