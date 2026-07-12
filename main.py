@@ -28,10 +28,21 @@ def main():
     #gesamt Strecke berechnen
     total_distance_m = route.calculate_total_distance()
     total_distance_km = total_distance_m / 1000
-    
+
+    #benötigte Zeit berechnen
+    total_time_s = route.calculate_total_time()
+
+    total_time_min = total_time_s / 60
+    total_time_h = total_time_s / 3600
+
+    hours = int(total_time_s // 3600)     #// ganz Zahlige Division; % gibt den Rest aus
+    minutes = int((total_time_s % 3600) // 60)
+    seconds = int(total_time_s % 60)
+
+    #Ausgabe der statischen Werte
     print("\n----------Daten über die Fahrt:----------")
     print(f"Zurückgelegte Strecke: {total_distance_km:.2f} km")
-   
+    print(f"Benötigte Zeit: {hours:02d}h {minutes:02d} min {seconds:02d} s")
 
 
 if __name__ == "__main__":
