@@ -1,5 +1,6 @@
 import logging
 from src.calculations.route_data_kinematics import RouteData
+from src.models.gps_point import GPSPoint
 
 logging.basicConfig(format="%(asctime)s:%(levelname)s: %(message)s",
                     level=logging.INFO,)
@@ -17,6 +18,8 @@ def main():
     
     # Test ob Daten richtig sind
     print(route.data[['time', 'distance_m', 'speed_m_s', 'acceleration_m_s2', 'slope']].head())
+
+    
 
 if __name__ == "__main__":
     main()
