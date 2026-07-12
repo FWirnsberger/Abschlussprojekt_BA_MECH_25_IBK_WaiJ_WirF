@@ -99,6 +99,29 @@ class RouteData:
         
         logging.info("Kinematik erfolgreich berechnet.")
 
+    def calculate_total_distance(self) -> float:
+        """
+        Hier wird die gesamte zurückgelegte Strecke in Meter berechnet, in km wird erst im main umgewandelt.
+        """
+
+        #Fehlererkennung falls keine Daten geladen wurden
+        if self.data is None:
+            logging.error("Fehler: Keine Daten geladen!")
+            return 0.0
+        
+        #Fehlererkennung falls die Funktion "calculate_kinematics" nicht ausgeführt wurde
+        if 'distance_m' not in self.data.columns:
+            logging.error("Fehler: Die Kinematik wurde nicht berechnet!")
+            return 0.0
+        
+        #Summe aus den einzelnen Teilstrecken zw. den GPS Punkten
+        total_distance = self.data['distance_m'].sum()
+        
+        logging.info(f"Gesamte Strecke wurde berechnet.")
+
+        return total_distance
+
+
 def get_data(self) -> pd.DataFrame:
         """Gibt das berechnete DataFrame zurück. (Datenkapselung)"""
         return self.data
