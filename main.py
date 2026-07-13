@@ -39,10 +39,16 @@ def main():
     minutes = int((total_time_s % 3600) // 60)
     seconds = int(total_time_s % 60)
 
+    #Durchschnittsgeschwindigkeit berechnen
+    average_speed_m_s= route.calculate_average_speed(total_distance_m, total_time_s)
+    average_speed_km_h = average_speed_m_s * 3.6
+    
+
     #Ausgabe der statischen Werte
     print("\n----------Daten über die Fahrt:----------")
     print(f"Zurückgelegte Strecke: {total_distance_km:.2f} km")
     print(f"Benötigte Zeit: {hours:02d}h {minutes:02d} min {seconds:02d} s")
+    print(f"Durchschnittsgeschwindigkeit: {average_speed_km_h:.2f} km/h")
 
 
 if __name__ == "__main__":

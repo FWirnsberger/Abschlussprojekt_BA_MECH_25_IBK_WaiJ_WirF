@@ -137,9 +137,30 @@ class RouteData:
         end_time = self.data["time"].iloc[-1]
 
         total_time = (end_time - start_time).total_seconds()
-        logging.info("gesamt Fahrzeit berechnet.")
+        logging.info("Gesamt Fahrzeit wurde berechnet.")
 
         return total_time
+    
+
+    def calculate_average_speed(self, total_distance : float, total_time: float) -> float:
+        """
+        Berechnung der Durchschnittsgeschwindigkeit
+        """
+        #Fehlererkennung
+        if self.data is None:
+            logging.error("Fehler: Keine Daten geladen!")
+            return 0.0
+        
+        #Division durch 0 verhindern
+        if total_time <= 0:
+            logging.error("Fehler: Gesamtzeit beträgt 0 Sekunden!")
+            return 0.0
+        
+        average_speed = total_distance / total_time 
+        logging.info("Durchschnittsgeschwindigkeit wurde berechnet.")
+
+        return average_speed
+
 
 
 def get_data(self) -> pd.DataFrame:
