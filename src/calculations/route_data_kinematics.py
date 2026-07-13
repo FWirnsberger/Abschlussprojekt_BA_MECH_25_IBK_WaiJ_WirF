@@ -204,6 +204,6 @@ class RouteData:
             
         return total_ascent, total_descent
 
-def get_data(self) -> pd.DataFrame:
+    def get_data(self) -> pd.DataFrame:
         """Gibt das berechnete DataFrame zurück. (Datenkapselung)"""
         return self.data
