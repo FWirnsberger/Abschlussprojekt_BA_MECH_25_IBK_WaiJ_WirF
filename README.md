@@ -3,6 +3,11 @@ Python Projekt um eine positive Note in einer LV zu bekommen
 
 
 ##Installation und Start
+Vorraussetzungen:
+Python 3.14.3
+MikTex (mit pdflatex)
+pip install -r requirements.txt 
+
 
 1. Erstellen eines _virtual environment_ mittels:
 ''' bash
