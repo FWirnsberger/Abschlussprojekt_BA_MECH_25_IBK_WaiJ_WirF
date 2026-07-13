@@ -145,7 +145,15 @@ class RouteData:
     def calculate_average_speed(self, total_distance : float, total_time: float) -> float:
         """
         Berechnung der Durchschnittsgeschwindigkeit
+
+        Args:
+            total_distance (float): gesamte zurückgelegte Strecke[m]
+            total_time (float): gesamte Fahrzeit[s]
+
+        Returns: 
+            float: Durchschnittsgeschwindigkeit [m/s]
         """
+        
         #Fehlererkennung
         if self.data is None:
             logging.error("Fehler: Keine Daten geladen!")
@@ -162,6 +170,13 @@ class RouteData:
         return average_speed
 
 
+    def calculate_total_elevation(self) -> tuple[float, float]:
+        """
+        Berechnung des Anstiegs und Abstieg über die Strecke
+
+        Returns:
+            tuple[float, float]: (gesamter Anstieg [m], gesamter Abstieg [m])
+        """
 
 def get_data(self) -> pd.DataFrame:
         """Gibt das berechnete DataFrame zurück. (Datenkapselung)"""
