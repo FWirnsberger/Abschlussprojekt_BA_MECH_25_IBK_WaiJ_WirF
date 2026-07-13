@@ -153,7 +153,7 @@ class RouteData:
         Returns: 
             float: Durchschnittsgeschwindigkeit [m/s]
         """
-        
+
         #Fehlererkennung
         if self.data is None:
             logging.error("Fehler: Keine Daten geladen!")
@@ -177,6 +177,32 @@ class RouteData:
         Returns:
             tuple[float, float]: (gesamter Anstieg [m], gesamter Abstieg [m])
         """
+        #Fehlererkennung
+        if self.data is None:
+            logging.error("Fehler: Keine Daten geladen!")
+            return 0.0, 0.0
+        
+        total_ascent = 0.0
+        total_descent = 0.0
+
+        #alle GPS durchlaufen
+        for i in range(1, len(self._points)):
+            p_previous = self._points[i-1]
+            p_currently = self._points[i]
+
+            #Höhenunterschied zwischen zwei Punkten berechnen
+            dh = p_currently.ele - p_previous.ele
+
+            #Anstieg
+            if dh > 0:
+                total_ascent += dh
+            #Abstieg
+            elif dh < 0:
+                total_descent += abs(dh)
+
+        logging.info("Höhenmeter wurden berechnet.")
+            
+        return total_ascent, total_descent
 
 def get_data(self) -> pd.DataFrame:
         """Gibt das berechnete DataFrame zurück. (Datenkapselung)"""

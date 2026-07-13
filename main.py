@@ -43,13 +43,16 @@ def main():
     average_speed_m_s= route.calculate_average_speed(total_distance_m, total_time_s)
     average_speed_km_h = average_speed_m_s * 3.6
     
+    #Anstieg, Abstieg berechnen
+    total_ascent, total_descent = route.calculate_total_elevation()
 
     #Ausgabe der statischen Werte
     print("\n----------Daten über die Fahrt:----------")
     print(f"Zurückgelegte Strecke: {total_distance_km:.2f} km")
     print(f"Benötigte Zeit: {hours:02d}h {minutes:02d} min {seconds:02d} s")
     print(f"Durchschnittsgeschwindigkeit: {average_speed_km_h:.2f} km/h")
-
+    print(f"Anstieg: {total_ascent:.2f} m")
+    print(f"Abstieg: {total_descent:.2f} m")
 
 if __name__ == "__main__":
     main()
