@@ -2,6 +2,10 @@ import logging
 from src.calculations.route_data_kinematics import RouteData
 from src.models.gps_point import GPSPoint
 
+#für Plots
+from src.reporting.plot_generator import PlotGenerator
+
+
 logging.basicConfig(format="%(asctime)s:%(levelname)s: %(message)s",
                     level=logging.INFO,)
  #                   filename="app.log")
@@ -19,8 +23,13 @@ def main():
     route.load_data()
 
     #Teilstrecken, Geschwindigkeiten, Beschleunigungen und Steigungen berechnen
-    print()
+    print() #Absatz
     route.calculate_kinematics()
+
+    #Plots erstellen
+    plot_generator = PlotGenerator(data = route.data, output_folder= "output/figures")
+    plot_path = plot_generator.create_speed_plot() 
+
 
     # Test ob Daten richtig sind
     print(route.data[['time', 'distance_m', 'speed_m_s', 'acceleration_m_s2', 'slope']].head())

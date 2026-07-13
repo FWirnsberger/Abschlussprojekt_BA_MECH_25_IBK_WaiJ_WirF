@@ -46,6 +46,33 @@ class PlotGenerator:
             raise ValueError("Die Spalte speed_m_s fehlt, wurde calculate_kinematics() ausgeführt?")
         
 
+        #Zeit seit Fahrtbeginn berechnen, in minuten
+        start_time = self.data["time"].iloc[0]
 
+        time_minutes = (self.data["time"] - start_time).dt.total_seconds() / 60     #.dt.totalseconds ist von pandas und rechnet die zeitdifferenz in Sekunden um
+
+        #Geschwindigkeit von m/s in km/h
+        speed_km_h = self.data["speed_m_s"] * 3.6
+
+        #Pfad der Grafik festlegen
+        figure_path = self.output_folder / "Geschwindigkeitsprofil.png"
+
+        #eine neue Grafik erstellen
+        plt.figure(figsize=(12, 6)) #Breite und Höhe in Zoll
+        #Verlauf zeichnen
+        plt.plot(time_minutes, speed_km_h)      #x-Achse, y-Achse 
+        #Beschriftung
+        plt.title("Geschwindigkeitsverlauf der Fahrt")
+        plt.xlabel("Fahrzeit [min]")
+        plt.ylabel("Geschwindigkeit [km/h]")
         
+        plt.grid()                              #Gitter einblenden
+        plt.tight_layout()                      #Abstände automatisch anpassen
         
+        #Grafik als png speichern
+        plt.savefig(figure_path, dpi = 300)
+        plt.close()                             #Grafik wird sofort wieder geschlossen, damit nichts aufploppt
+
+        logging.info(f"Geschwindkeitsgrafik erstellt: {figure_path}")
+
+        return figure_path
