@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+#Grafiken und Latex Dateien
+output/figures/
+
+# Generierte Berichte
+output/report/
+
+# LaTeX-Hilfsdateien
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz

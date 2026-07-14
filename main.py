@@ -2,6 +2,11 @@ import logging
 from src.calculations.route_data_kinematics import RouteData
 from src.models.gps_point import GPSPoint
 
+#für Plots
+from src.reporting.plot_generator import PlotGenerator
+from src.reporting.report_generator import ReportGenerator
+
+
 logging.basicConfig(format="%(asctime)s:%(levelname)s: %(message)s",
                     level=logging.INFO,)
  #                   filename="app.log")
@@ -19,11 +24,15 @@ def main():
     route.load_data()
 
     #Teilstrecken, Geschwindigkeiten, Beschleunigungen und Steigungen berechnen
-    print()
+    print() #Absatz
     route.calculate_kinematics()
 
     # Test ob Daten richtig sind
     print(route.data[['time', 'distance_m', 'speed_m_s', 'acceleration_m_s2', 'slope']].head())
+
+    #---------------------------------------------------------------
+    #Hier werden die statischen Parameter berechnet
+    #---------------------------------------------------------------
 
     #gesamt Strecke berechnen
     total_distance_m = route.calculate_total_distance()
@@ -53,6 +62,30 @@ def main():
     print(f"Durchschnittsgeschwindigkeit: {average_speed_km_h:.2f} km/h")
     print(f"Anstieg: {total_ascent:.2f} m")
     print(f"Abstieg: {total_descent:.2f} m")
+
+    #---------------------------------------------------------------
+    #Hier werden die Plots und der Bericht erstellt
+    #---------------------------------------------------------------
+    plot_generator = PlotGenerator(data = route.data, output_folder = "output/figures")
+    speed_plod_path = plot_generator.create_speed_plot()
+    
+    report_generator = ReportGenerator(         #es wird ein neues Bericht Objekt erstellt und der Ausgabeordner und Titel festgelegt
+        output_directory = "output/report", 
+        title = "Auswertung der Fahrradsimulation"
+    )
+
+    report_generator.add_figure(                #die erstellte Geschwindigkeitsgrafik wird hinzugefügt
+        image_path=speed_plod_path,
+        caption="Geschwindigkeitsverlauf während der gesamten Fahrt.",
+        label="fig:speed-profile"
+    )
+
+    tex_path = report_generator.create_tex_file()
+    pdf_path = report_generator.export_pdf(tex_path)
+
+    print(f"PDF-Bericht erstelle: {pdf_path}")
+
+
 
 if __name__ == "__main__":
     main()
