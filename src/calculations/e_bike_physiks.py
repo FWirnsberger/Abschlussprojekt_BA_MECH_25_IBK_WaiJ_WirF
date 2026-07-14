@@ -1,9 +1,11 @@
+from src.models.e_bike import EBike
+
 class EBikePhysiks:
     """
     Zuständig für die physikalischen Berechnungen (Kräfte und Leistung).
     """
 
-    def __init__(self, ebike):
+    def __init__(self, ebike: EBike) -> None:
         # Wir speichern uns das übergebene Fahrrad-Objekt. 
         # für später um zb. die Masse abfragen
         self.ebike = ebike
