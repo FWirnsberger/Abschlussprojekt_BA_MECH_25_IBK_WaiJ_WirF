@@ -1,4 +1,5 @@
-from battery_base import BatteryBase
+from src.models.battery_base import BatteryBase
+
 
 class BatteryPack(BatteryBase):
     """
