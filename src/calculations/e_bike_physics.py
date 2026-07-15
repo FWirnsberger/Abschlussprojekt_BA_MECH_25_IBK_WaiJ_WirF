@@ -1,6 +1,6 @@
 from src.models.e_bike import EBike
 
-class EBikePhysiks:
+class EBikePhysics:
     """
     Zuständig für die physikalischen Berechnungen (Kräfte und Leistung).
     """
@@ -34,7 +34,7 @@ class EBikePhysiks:
         # gesamtkraft berechnen
         f_total = f_a + f_s + f_d
         
-        # lLeistung = F * v
+        # leistung = F * v
         power = f_total * speed
         
         return power
