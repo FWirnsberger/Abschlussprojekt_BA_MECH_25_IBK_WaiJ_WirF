@@ -1,6 +1,11 @@
 import logging
 from src.calculations.route_data_kinematics import RouteData
 from src.models.gps_point import GPSPoint
+from src.models.e_bike import EBike
+from src.models.motor import Motor
+from src.models.battery_lipo import BatteryLiPo
+from src.calculations.e_bike_physics import EBikePhysics
+from src.simulation.e_bike_simulator import EBikeSimulator
 
 #für Plots
 from src.reporting.plot_generator import PlotGenerator
@@ -62,6 +67,51 @@ def main():
     print(f"Durchschnittsgeschwindigkeit: {average_speed_km_h:.2f} km/h")
     print(f"Anstieg: {total_ascent:.2f} m")
     print(f"Abstieg: {total_descent:.2f} m")
+
+    #---------------------------------------------------------------
+    # Hier startet die E-Bike Simulation
+    #---------------------------------------------------------------
+    print("\n---------- Simulation startet ----------")
+
+    #Unsere Objekte benennen
+    my_bike = EBike(rider_mass=75.0, bike_mass=25.0) # 75 kg Fahrer, 25 kg Bike
+    my_motor = Motor(motor_constant=1.5, efficiency=0.85) # 85% Wirkungsgrad
+    my_battery = BatteryLiPo(capacity_nom_Ah=50.0, initial_soc=1.0) # 15 Ah Akku, 100% voll
+    
+    physics = EBikePhysics(ebike=my_bike)
+
+    #Listen für den Simulator vorbereiten
+    power_profile = []
+    duration_profile = []
+
+    # Die Routendaten (Pandas Tabelle) durchlaufen
+    # Wir starten bei Index 1, da wir für das Delta_t den Abstand zum vorherigen Punkt brauchen
+    for i in range(1, len(route.data)):
+        
+        # Dauer dieses Streckenabschnitts berechnen (in Sekunden)
+        t_current = route.data.loc[i, 'time']
+        t_previous = route.data.loc[i-1, 'time']
+        dt = (t_current - t_previous).total_seconds()
+        duration_profile.append(dt)
+        
+        # Werte aus der Tabelle auslesen
+        v = route.data.loc[i, 'speed_m_s']
+        a = route.data.loc[i, 'acceleration_m_s2']
+        s = route.data.loc[i, 'slope']
+        
+        # Mechanische Leistung vom Physik-Rechner berechnen lassen
+        p_mech = physics.calculate_power(speed=v, acceleration=a, slope=s)
+        power_profile.append(p_mech)
+
+    #Simulator starten
+    simulator = EBikeSimulator(e_bike=my_bike, battery=my_battery, e_motor=my_motor)
+    simulator.simulate(power_profile=power_profile, duration_profile=duration_profile)
+
+    #Ergebnisse ausgeben
+    print("Simulation erfolgreich beendet!")
+    print(f"Verbleibender Akku (SoC): {my_battery.soc * 100:.2f} %")
+    print(f"Endspannung unter Last:   {my_battery.voltage():.2f} V")
+    #---------------------------------------------------------------
 
     #---------------------------------------------------------------
     #Hier werden die Plots und der Bericht erstellt
