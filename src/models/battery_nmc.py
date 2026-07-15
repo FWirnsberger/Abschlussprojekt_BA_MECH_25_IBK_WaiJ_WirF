@@ -1,6 +1,6 @@
 from src.models.battery_pack import BatteryPack
 
-class NMCBattery(BatteryPack):
+class BatteryNMC(BatteryPack):
     """
     Stellt eine NMC Batterie dar (Nickel-Mangan-Cobalt).
     Erbt von der Battery Klasse.

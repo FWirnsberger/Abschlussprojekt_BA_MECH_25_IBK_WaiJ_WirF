@@ -1,6 +1,6 @@
 from src.models.battery_pack import BatteryPack
 
-class LiPoBattery(BatteryPack):
+class BatteryLiPo(BatteryPack):
     """
     Stellt eine LiPo Batterie dar (Lithium-Polymer).
     Erbt von der Battery Klasse.
