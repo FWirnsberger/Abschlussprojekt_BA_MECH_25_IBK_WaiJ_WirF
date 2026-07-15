@@ -2,7 +2,6 @@ import logging
 from src.models.battery_base import BatteryBase
 from src.models.motor import Motor
 from src.models.e_bike import EBike
-from src.calculations.e_bike_physics import EBikePhysics
 
 class EBikeSimulator:
     """
