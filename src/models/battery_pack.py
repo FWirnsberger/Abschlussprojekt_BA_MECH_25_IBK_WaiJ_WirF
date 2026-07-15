@@ -43,6 +43,7 @@ class BatteryPack(BatteryBase):
         """
         open_circuit_voltage = self.Vmin + self.soc * (self.Vmax - self.Vmin)
         return open_circuit_voltage - self.R_int * current
+    #wird in den akkus überschrieben mit der ocv kennlinie
     
     def is_empty(self) -> bool:
         """Abfrage, ob die Batterie leer ist."""
