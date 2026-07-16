@@ -102,6 +102,8 @@ def main():
         # Mechanische Leistung vom Physik-Rechner berechnen lassen
         p_mech = physics.calculate_power(speed=v, acceleration=a, slope=s)
         power_profile.append(p_mech)
+        
+         
 
     #Simulator starten
     simulator = EBikeSimulator(e_bike=my_bike, battery=my_battery, e_motor=my_motor)
