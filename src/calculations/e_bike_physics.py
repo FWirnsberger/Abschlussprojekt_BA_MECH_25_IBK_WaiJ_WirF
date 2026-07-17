@@ -38,3 +38,23 @@ class EBikePhysics:
         power = f_total * speed
         
         return power
+    
+    def calculate_max_power(self, power_profile: list[float]) -> float:
+        """
+        Hier wird die maximale Leistung während der Fahrt berechnet.
+
+        Argumente:
+            power_profile (list[float]):
+                ist eine Liste mit den berechneten Leistungen zwischen den GPS Punkten in Watt
+
+        Returns:
+            float mit der maximalen Mechanischen Leistung in Watt
+        """
+
+        #Fehlererkennung
+        if not power_profile:       #falls keine Leistungswerte vorhanden sind
+            return 0.0
+        
+        max_power = max(power_profile)
+
+        return max_power

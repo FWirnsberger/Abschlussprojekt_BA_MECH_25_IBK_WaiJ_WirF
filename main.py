@@ -102,8 +102,27 @@ def main():
         # Mechanische Leistung vom Physik-Rechner berechnen lassen
         p_mech = physics.calculate_power(speed=v, acceleration=a, slope=s)
         power_profile.append(p_mech)
-        
-         
+
+    #ZUM TESTEN
+    route.data["power_w"] = [0.0] + power_profile
+    
+    max_power_index = route.data["power_w"].idxmax()
+    max_power_row = route.data.loc[max_power_index]
+
+    print("\n---------- Maximale Leistung ----------")
+    print(f"Index:             {max_power_index}")
+    print(f"Zeitpunkt:         {max_power_row['time']}")
+    print(f"Leistung:          {max_power_row['power_w']:.2f} W")
+    print(f"Geschwindigkeit:   {max_power_row['speed_m_s']:.2f} m/s")
+    print(f"Beschleunigung:    {max_power_row['acceleration_m_s2']:.2f} m/s²")
+    print(f"Steigung:          {max_power_row['slope'] * 100:.2f} %")
+
+
+
+    #Maximale Leistung während der Fahrt
+    max_power_w = physics.calculate_max_power(power_profile)
+
+    
 
     #Simulator starten
     simulator = EBikeSimulator(e_bike=my_bike, battery=my_battery, e_motor=my_motor)
@@ -111,6 +130,7 @@ def main():
 
     #Ergebnisse ausgeben
     print("Simulation erfolgreich beendet!")
+    print(f"Maximale Leistung (gesamt): {max_power_w:.2f} W")
     print(f"Verbleibender Akku (SoC): {my_battery.soc * 100:.2f} %")
     print(f"Endspannung unter Last:   {my_battery.voltage():.2f} V")
     #---------------------------------------------------------------
