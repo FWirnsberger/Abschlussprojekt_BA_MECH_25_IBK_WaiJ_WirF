@@ -98,6 +98,51 @@ class RouteData:
 
             logging.info("Distanz, Rohgeschwindigkeit, Zeitdifferenz und Steigung WURDEN berechnet.")
 
+    def filter_speed(self, window_size: int = 5)-> None: 
+        """
+        Hier wird die Rohgeschwindigkeit mit einem Medianfilter geglättet
+        Der Medianfilter entfernt Ausreißer, indem er die Ausreißer durch den Median seiner benachbarten Werte ersetzt.
+        
+        Argumente
+            window_size:
+                Anzahl der Messwerte innerhalb des Filterfensters.
+                Die Fenstergröße muss eine ungerade Zahl sein.
+        """
+        #Fehlererkennung
+        if self.data is None:
+            logging.error("Fehler: Keine Daten geladen!")
+            return
+        
+        #wurde die Rohgeschwindigkeit berechnet?
+        if "speed_raw_m_s" not in self.data.columns:
+            logging.error("Fehler: Die Rohgeschwindigkeit wurde nicht berechnet!")
+            return
+        
+        #Fenstergröße für Medianfilter überprüfen
+        #Fenstergröße ist die Anzahl der Werte die für den Median betrachtet werden
+        if window_size < 3:
+            raise ValueError("Nur Fenstergrößen grüßer 3 zulässig.")
+        
+        if window_size % 2 == 0:
+            raise ValueError("Fenstergröße muss einer ungeraden Zahl entsprechen!")
+        
+        logging.info(f"Die Geschwindigkeit wird mit einem Medianfilter und einer Fenstergröße von {window_size} berechnet.")
+
+        #Medianfilter wird angewandt
+        self.data["speed_m_s"] = (self.data["speed_raw_m_s"].rolling(
+                window=window_size,
+                center=True,
+                min_periods=1   
+            ).median()
+        )
+        
+        #An Anfang und Ende fehlen die Werte, die werden aufgefüllt
+        #bfill - backward fill, ffill - forward fill
+        self.data["speed_m_s"] = (self.data["speed_m_s"].bfill().ffill())
+
+        logging.info("Geschwindigkeit wurde gefiltert")
+
+
 
     def calculate_total_distance(self) -> float:
         """
