@@ -35,69 +35,69 @@ class RouteData:
         logging.info(f"{len(self._points)} GPSPoint-Objekte erfolgreich geladen.")
 
     def calculate_kinematics(self) -> None:
-        """Berechnet Distanz, Geschwindigkeit, Beschleunigung und Steigung zwischen den GPS-Punkten."""
+        """
+        Hier wird die Distanz, Rohgeschwindigkeit, Zeitdifferenz und Steigung zwischen zwei aufeinanderfolgenden 
+        GPS Punkten.
+        Anschließend wird die Geschwindigkeit gefiltert und daraus die Beschleunigung berechnet, da die Ausreißer 
+        die Ergebnisse der Leistungsberechnung verfälschen
+        """
+        #Fehlererkenneung
         if self.data is None:
             logging.error("Fehler: Keine Daten geladen!")
             return
+        
+        logging.info("Distanz, Rohgeschwindigkeit, Zeitdifferenz und Steigung WERDEN berechnet.")
 
-        logging.info("Berechne Kinematik (Distanz, Geschwindigkeit, Beschleunigung, Steigung): ")
+        distances = [0.0]               #Liste zum speichern der einzelnen Distanzen zw. den Punkten
         
-        # Listen zum Speichern der Ergebnisse (start bei 0.0)
-        distances = [0.0]
-        speeds = [0.0]
-        accelerations = [0.0]
-        slopes = [0.0]
-        
-        # Wir iterieren durch die Tabelle ab der zweiten zeile (start index 1)
+        raw_speeds = [float("nan")]     #1. Wert kann nicht berechnet werden, da kein vorheriger Punkt existiert
+
+        time_differences = [0.0]        #Liste für Zeiten
+
+        slopes = [0.0]                  #Liste für Steigungen
+
+        #die Datentabelle wird durchlaufen
         for i in range(1, len(self.data)):
-            p_prev = self._points[i-1] # Der vorherige Punkt A
-            p_curr = self._points[i]   # Der aktuelle punkt B
-            
-            # Koordinaten von Punkt B
-            lat2 = self.data.loc[i, 'lat']
-            lon2 = self.data.loc[i, 'lon']
-            
-            # Distanz [m] (ds)
-            # Punkt A berechnet die Distanz zu Punkt B
+            #vorheriger und aktualler GPS Punkt
+            p_prev = self._points[i - 1]
+            p_curr = self._points[i]
+
+            #Distanz zwischen den beiden Punkten
             ds = p_prev.get_distance_to(p_curr)
             distances.append(ds)
-            
-            # Zeitdifferenz [s] (dt)
-            dt = p_prev.get_time_difference_to(p_curr)
-            
-            # Geschwindigkeit [m/s] (v = ds / dt)
-            if dt > 0:
-                v = ds / dt
-            else:
-                v = 0.0
-                
-            speeds.append(v)
 
-            # Beschleunigung (a) [m/s^2] (a = (v - v_prev) / dt)
-            v_prev = speeds[i-1]
+            #Zeitdifferenz der beiden Punkte
+            dt = p_prev.get_time_difference_to(p_curr)
+            time_differences.append(dt)
+
+            #Rohgeschwindigkeit berechnen in m/s
             if dt > 0:
-                a = (v - v_prev) / dt
+                raw_speed = ds / dt
             else:
-                a = 0.0
-            accelerations.append(a)
-            
-            # Steigung
-            # mit Getter (.ele), um höhe abzufragen
+                raw_speed = float("nan")    #wenn dt < 0 wird kein gültiger Wert definiert
+                logging.warning(f"ungültige Zeitdifferenz {dt:.2f} bei Index {i} !")
+
+            raw_speeds.append(raw_speed)
+
+            #Höhenunterschied berechnen in m
             dh = p_curr.ele - p_prev.ele
-            
+
+            #Steigung berechnen
             if ds > 0:
-                slope = dh / ds  
+                slope = dh /ds
             else:
-                slope = 0.0
+                slope = 0
+
             slopes.append(slope)
-            
-        # Ergebnisse als neue Spalten zum DataFrame hinzufügen
-        self.data['distance_m'] = distances
-        self.data['speed_m_s'] = speeds
-        self.data['acceleration_m_s2'] = accelerations
-        self.data['slope'] = slopes
-        
-        logging.info("Kinematik erfolgreich berechnet.")
+
+            #Die Ergibnisse werden in einem DataFrame gespeichert
+            self.data["distance_m"] = distances
+            self.data["delta_time_s"] = time_differences
+            self.data["speed_raw_m_s"] = raw_speeds
+            self.data["slope"] = slopes
+
+            logging.info("Distanz, Rohgeschwindigkeit, Zeitdifferenz und Steigung WURDEN berechnet.")
+
 
     def calculate_total_distance(self) -> float:
         """
