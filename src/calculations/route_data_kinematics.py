@@ -143,6 +143,72 @@ class RouteData:
         logging.info("Geschwindigkeit wurde gefiltert")
 
 
+    def calculate_acceleration(self, max_acceleration_m_s2: float = 3.5) -> None:       #alle Beschleunigugen > 3.5 werden "abgeschnitten" um unrealistische Werte zu vermeiden
+        """
+        Hier wird die Beschleunigung aus der gefilterten Geschwindigkeit berechnet.
+        Danach wird die Beschleunigung in einem realistischen und optimistischen Bereich von
+        +- 3.5 m_s2 begrenzt
+
+        Argumente: 
+            max_acceleration_m_s2:
+                max Betrag der Beschleunigung (selbst festgelegt)
+        """
+
+        #Fehlererkennung-Geschwindigkeit vorhanden?
+        if "speed_m_s" not in self.data.columns:
+            logging.error("Fehler: Die Geschwindigkeit wurde noch nicht gefiltert.")
+            return
+        
+        #Fehlererkennung-Zeitdifferenzen vorhanden?
+        if "delta_time_s" not in self.data.columns:
+            logging.error("Fehler: Die Zeitdifferenz wurde noch nicht berechnet.")
+            return
+        
+        #Fehlererkennung-liegt die max. zulässige Beschleunigung in einem plausiblen Bereich?
+        if max_acceleration_m_s2 <= 0:
+            raise ValueError("Die max. zulässige Beschleunigung muss größer 0 sein.")
+            
+        logging.info("Beschleunigung aus der gefilterten Geschwindigkeit wird berechnet.")
+
+        #Listen zum Speichern der Ergebnisse
+        raw_accelerations = [0.0]
+        accelerations = [0.0]
+
+        #jetzt wird die zuvor berechnete Tabelle durchlaufen
+        for i in range(1, len(self.data)):
+            current_speed = self.data[i, "speed_m_s"]           #aktuelle gefilterte Geschwindigkeit
+            previous_speed = self.data[i - 1, "speed_m_s"]      #vorherige gefilterte Geschwindigkeit
+
+            #Zeitdifferenz vom aktuellen Streckenabschnitt berechnen
+            dt = self.data.loc[i, "delta_time_s"]
+
+            #Beschleunigung berechnen
+            if dt > pd.Timedelta(seconds=0):    #damit kann float (dt) mit integer (0) verglichen werden ohne Konflikte
+                raw_acceleration = (current_speed - previous_speed) / dt.total_seconds()
+            else: 
+                raw_acceleration = 0.0
+
+            raw_accelerations.append(raw_acceleration)
+
+            #Beschleunigung wird auf den bestimmten Bereich begrenzt
+            limited_acceleration = max(
+                -max_acceleration_m_s2, 
+                min(
+                    raw_acceleration, max_acceleration_m_s2
+                    )
+            )
+
+            accelerations.append(limited_acceleration)
+
+            #Rohe und die begrenzte Beschleunigung berechnen
+            self.data["acceleration_raw_m_s2"] = raw_accelerations
+            self.data["acceleration_m_s2"] = accelerations
+
+            #Zur Information werden die Anzahl der begrenzten Werte berechnet
+            limited_count = (self.data["acceleration_raw_m_s2"] != self.data["acceleration_m_s2"]).sum()
+
+            logging.info(f"Es wurden {limited_count} Beschleunigungswerte auf +- {max_acceleration_m_s2:.2f} begrenzt.")
+            logging.info("Beschleunigung wurde berechnet.")
 
     def calculate_total_distance(self) -> float:
         """
