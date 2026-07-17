@@ -75,16 +75,19 @@ def main():
     print("\n---------- Simulation startet ----------")
 
     #Unsere Objekte benennen
-    my_bike = EBike(rider_mass=75.0, bike_mass=25.0) # 75 kg Fahrer, 25 kg Bike
-    my_motor = Motor(motor_constant=1.5, efficiency=0.85) # 85% Wirkungsgrad
-    battery_lipo = BatteryLiPo(capacity_nom_Ah=50.0, initial_soc=1.0) # 50 Ah Akku, 100% voll
-    battery_nmc = BatteryNMC(capacity_nom_Ah=50.0, initial_soc=1.0) # 50 Ah Akku, 100% voll
+    my_bike = EBike(rider_mass = 75.0, bike_mass = 25.0) # 75 kg Fahrer, 25 kg Bike
+    my_motor = Motor(motor_constant = 1.5, efficiency = 0.85) # 85% Wirkungsgrad
+    battery_lipo = BatteryLiPo(capacity_nom_Ah = 50.0, initial_soc = 1.0) # 50 Ah Akku, 100% voll
+    battery_nmc = BatteryNMC(capacity_nom_Ah = 50.0, initial_soc = 1.0) # 50 Ah Akku, 100% voll
     
     physics = EBikePhysics(ebike=my_bike)
 
     #Listen für den Simulator vorbereiten
     power_profile = []
+    torque_profile = []
     duration_profile = []
+
+    wheel_radius = my_bike.get_wheel_radius_m()
 
     # Die Routendaten (Pandas Tabelle) durchlaufen
     # Wir starten bei Index 1, da wir für das Delta_t den Abstand zum vorherigen Punkt brauchen
@@ -102,15 +105,20 @@ def main():
         s = route.data.loc[i, 'slope']
         
         # Mechanische Leistung vom Physik-Rechner berechnen lassen
-        p_mech = physics.calculate_power(speed=v, acceleration=a, slope=s)
+        f_total, p_mech = physics.calculate_force_and_power(speed = v, acceleration = a, slope = s)
         power_profile.append(p_mech)
+
+
+        # Drehmoment berechnen und speichern
+        torque = my_motor.get_torque(force = f_total, wheel_radius = wheel_radius)
+        torque_profile.append(torque)
 
         
     #Simulation für LiPo
     print("\nStarte Simulation für LiPo Akku")
     #Simulator starten
-    simulator_lipo = EBikeSimulator(e_bike=my_bike, battery=battery_lipo, e_motor=my_motor)
-    simulator_lipo.simulate(power_profile=power_profile, duration_profile=duration_profile)
+    simulator_lipo = EBikeSimulator(e_bike = my_bike, battery = battery_lipo, e_motor = my_motor)
+    simulator_lipo.simulate(torque_profile = torque_profile, duration_profile = duration_profile)
     #Ergebnisse ausgeben
     print("Simulation fertig.")
     #mit __str__ im battery_pack wird der verbleibende SoC und SPannung berechnet
@@ -119,10 +127,10 @@ def main():
     #Simulation für NMC
     print("\nStarte Simulation für NMC Akku")
     #Simulator starten
-    simulator_nmc = EBikeSimulator(e_bike=my_bike, battery=battery_nmc, e_motor=my_motor)
-    simulator_nmc.simulate(power_profile=power_profile, duration_profile=duration_profile)
+    simulator_nmc = EBikeSimulator(e_bike = my_bike, battery = battery_nmc, e_motor = my_motor)
+    simulator_nmc.simulate(torque_profile = torque_profile, duration_profile = duration_profile)
     #Ergebnisse ausgeben
-    print("Simulation erfolgreich beendet!")
+    print("Simulation fertig")
     print(f"Ergebnis NMC: {battery_nmc}")   
 
 

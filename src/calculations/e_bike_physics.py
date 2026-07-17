@@ -14,9 +14,9 @@ class EBikePhysics:
         self.rho = 1.225  # Luftdichte in kg/m³
         self.g = 9.81     # Erdbeschleunigung in m/s²
 
-    def calculate_power(self, speed: float, acceleration: float, slope: float) -> float:
+    def calculate_force_and_power(self, speed: float, acceleration: float, slope: float) -> tuple[float, float]:
         """
-        Berechnet die benötigte mechanische Leistung (P = F * v) [W]
+        Berechnet die benötigte Kraft [N] mechanische Leistung [W]
         """
 
         # Gesamtmasse abrufen
@@ -37,4 +37,4 @@ class EBikePhysics:
         # leistung = F * v
         power = f_total * speed
         
-        return power
+        return f_total, power

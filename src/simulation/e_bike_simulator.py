@@ -16,7 +16,7 @@ class EBikeSimulator:
         self.voltage_profile = []
         self.ampere_profile = []
 
-    def simulate(self, power_profile: list[float], duration_profile: list[float]) -> None:
+    def simulate(self, torque_profile: list[float], duration_profile: list[float]) -> None:
         """
         Simuliert den Ladezustand der Batterie über bestimmte Zeitabschnitte.
         """
@@ -28,14 +28,12 @@ class EBikeSimulator:
         # Initialisierung: Erste Spannung bei t=0 eintragen
         self.voltage_profile.append(self.battery.voltage())
 
-        # Schleife über alle Zeiten
-        for p, d in zip(power_profile, duration_profile):
+    
+        #iterieren über das Drehmoment (t)
+        for t, d in zip(torque_profile, duration_profile):   
 
-            # Aktuelle Spannng abfragen
-            current_voltage = self.battery.voltage()
-
-            # Den Motor nach benötigten Strom fragen
-            i = self.e_motor.get_current_draw(power=p, voltage=current_voltage)
+            #Strom basierend auf dem Drehmoment abfragen
+            i = self.e_motor.get_current(torque=t) 
 
             # Sicherheitsabfrage ob Akku leer
             if self.battery.is_empty() and i > 0:
