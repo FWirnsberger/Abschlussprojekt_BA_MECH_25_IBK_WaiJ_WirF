@@ -78,20 +78,20 @@ def main():
     print("\n---------- Simulation startet ----------")
 
     #Unsere Objekte benennen
-    my_bike = EBike(rider_mass=75.0,        #75 kg Fahrer
-                    bike_mass=25.0,         #25 kg Bike
-                    rider_power_w=100)      #100 Watt leistet der Fahrer maximal
+    my_bike = EBike(rider_mass = 70.0,        #70 kg Fahrer
+                    bike_mass = 10.0,         #10 kg Bike
+                    rider_power_w = 100)      #100 Watt leistet der Fahrer maximal
 
-    my_motor = Motor(motor_constant=1.5, 
-                     efficiency=0.85) # 85% Wirkungsgrad
+    my_motor = Motor(motor_constant = 1.5, 
+                     efficiency = 0.85) # 85% Wirkungsgrad
     
-    battery_lipo = BatteryLiPo(capacity_nom_Ah=50.0, 
-                               initial_soc=1.0) # 50 Ah Akku, 100% voll
+    battery_lipo = BatteryLiPo(capacity_nom_Ah = 50.0, 
+                               initial_soc = 1.0) # 50 Ah Akku, 100% voll
     
-    battery_nmc = BatteryNMC(capacity_nom_Ah=50.0, 
-                             initial_soc=1.0) # 50 Ah Akku, 100% voll
+    battery_nmc = BatteryNMC(capacity_nom_Ah = 50.0, 
+                             initial_soc = 1.0) # 50 Ah Akku, 100% voll
     
-    physics = EBikePhysics(ebike=my_bike)
+    physics = EBikePhysics(ebike = my_bike)
 
     #Listen für den Simulator vorbereiten
     total_power_profile: list[float] = []
@@ -109,21 +109,14 @@ def main():
     # Wir starten bei Index 1, da wir für das Delta_t den Abstand zum vorherigen Punkt brauchen
     for i in range(1, len(route.data)):
         
-        # Dauer dieses Streckenabschnitts berechnen (in Sekunden)
-        t_current = route.data.loc[i, 'time']
-        t_previous = route.data.loc[i-1, 'time']
-
-        dt = (t_current - t_previous).total_seconds()
-        if dt <= 0.0:
-            logging.warning(f"ungültige Zeitdifferenz bei Index {i}: {dt:.2f} s")
-            dt = 0.0
-
-        duration_profile.append(dt)
         
         # Werte aus der Tabelle auslesen
         speed = route.data.loc[i, 'speed_m_s']
         acceleration = route.data.loc[i, 'acceleration_m_s2']
         slope = route.data.loc[i, 'slope']
+        dt = route.data.loc[i, 'delta_time_s']
+        duration_profile.append(dt)
+        
         
         #1. Schritt: gesamte mechanische Leistung berechen (Fahrer und Motor)
         total_power = physics.calculate_power(
@@ -218,13 +211,15 @@ def main():
     my_battery = battery_lipo
 
     #Simulator starten
-    simulator_lipo = EBikeSimulator(e_bike=my_bike, 
-                                    battery=my_battery, 
-                                    e_motor=my_motor)
+    simulator_lipo = EBikeSimulator(e_bike = my_bike, battery = battery_lipo, e_motor = my_motor)
+    simulator_lipo.simulate(torque_profile = motor_torque_profile, duration_profile = duration_profile)
     
-    simulator_lipo.simulate(power_profile=motor_power_profile, 
-                            duration_profile=duration_profile)
-
+    # Lipo ergebnisse für Plot speichern
+    # Strom war in der schleife, also [0.0] davor. Voltage und SoC haben den schon den richtigen startwert.
+    route.data['current_A_lipo'] = [0.0] + simulator_lipo.ampere_profile
+    route.data['voltage_V_lipo'] = simulator_lipo.voltage_profile
+    route.data['soc_lipo'] = simulator_lipo.soc_profile
+    
     #Ergebnisse ausgeben
     print("Simulation für LiPO fertig.")
     #mit __str__ im battery_pack wird der verbleibende SoC und SPannung berechnet
@@ -237,15 +232,16 @@ def main():
 
     my_battery = battery_nmc
     #Simulator starten
-    simulator_nmc = EBikeSimulator(e_bike=my_bike, 
-                                   battery=my_battery, 
-                                   e_motor=my_motor)
-    
-    simulator_nmc.simulate(power_profile=motor_power_profile, 
-                           duration_profile=duration_profile)
-    
-    print("Simulation für NMC fertig.")
+    simulator_nmc = EBikeSimulator(e_bike = my_bike, battery = battery_nmc, e_motor = my_motor)
+    simulator_nmc.simulate(torque_profile = motor_torque_profile, duration_profile = duration_profile)
+
+    # NMC ergebnisse für Plot speichern
+    # Strom war in der schleife, also [0.0] davor. Voltage und SoC haben den schon den richtigen startwert.
+    route.data['current_A_nmc'] = [0.0] + simulator_nmc.ampere_profile
+    route.data['voltage_V_nmc'] = simulator_nmc.voltage_profile
+    route.data['soc_nmc'] = simulator_nmc.soc_profile
     #Ergebnisse ausgeben
+    print("Simulation fertig")
     print(f"Ergebnis NMC: {battery_nmc}")   
     print()
 

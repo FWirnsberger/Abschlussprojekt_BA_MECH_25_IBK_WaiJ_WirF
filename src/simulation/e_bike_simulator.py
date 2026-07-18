@@ -15,8 +15,9 @@ class EBikeSimulator:
         # Listen zum Speichern der Ergebnisse (für Plotting + Resultate)
         self.voltage_profile = []
         self.ampere_profile = []
+        self.soc_profile = []
 
-    def simulate(self, power_profile: list[float], duration_profile: list[float]) -> None:
+    def simulate(self, torque_profile: list[float], duration_profile: list[float]) -> None:
         """
         Simuliert den Ladezustand der Batterie über bestimmte Zeitabschnitte.
         """
@@ -24,26 +25,33 @@ class EBikeSimulator:
         # Listen leeren, falls die Simulation mehrmals gestartet wird
         self.voltage_profile = []
         self.ampere_profile = []
+        self.soc_profile = []
         
         # Initialisierung: Erste Spannung bei t=0 eintragen
         self.voltage_profile.append(self.battery.voltage())
+        self.soc_profile.append(self.battery.soc)
+        
+        # "Merker", damit wird die Konsole nicht zugespammt, sobald der akku leer ist
+        empty_warning_printed = False
+        full_warning_printed = False
+    
+        #iterieren über das Drehmoment (t)
+        for t, d in zip(torque_profile, duration_profile):   
 
-        # Schleife über alle Zeiten
-        for p, d in zip(power_profile, duration_profile):
-
-            # Aktuelle Spannng abfragen
-            current_voltage = self.battery.voltage()
-
-            # Den Motor nach benötigten Strom fragen
-            i = self.e_motor.get_current_draw(power=p, voltage=current_voltage)
+            #Strom basierend auf dem Drehmoment abfragen
+            i = self.e_motor.get_current(torque=t) 
 
             # Sicherheitsabfrage ob Akku leer
             if self.battery.is_empty() and i > 0:
-                logging.warning("Batterie ist leer :(")
+                if not empty_warning_printed:
+                    logging.warning("Batterie ist leer :(")
+                    empty_warning_printed = True #gegen log spamming
                 i = 0.0  # Strom auf 0 setzen, Akku leer
 
             elif self.battery.is_full() and i < 0:
-                logging.warning("Batter ist voll :)")
+                if not full_warning_printed:
+                    logging.warning("Batter ist voll :)")
+                    full_warning_printed = True
                 i = 0.0  # Ladestrom auf 0, Akku voll 
 
             # Stromverlauf speichern
@@ -56,5 +64,6 @@ class EBikeSimulator:
             # neuen SoC abfragen und in den Verlauf eintragen
             v = self.battery.voltage(current=i)
             self.voltage_profile.append(v)
+            self.soc_profile.append(self.battery.soc)
 
     logging.info("Simulation erfolgreich durchgeführt.")

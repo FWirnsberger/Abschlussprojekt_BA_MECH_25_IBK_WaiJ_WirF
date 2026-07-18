@@ -56,6 +56,7 @@ class RouteData:
 
         slopes = [0.0]                  #Liste für Steigungen
 
+
         #die Datentabelle wird durchlaufen
         for i in range(1, len(self.data)):
             #vorheriger und aktualler GPS Punkt
