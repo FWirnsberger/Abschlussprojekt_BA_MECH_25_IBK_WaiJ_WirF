@@ -78,16 +78,32 @@ def main():
     print("\n---------- Simulation startet ----------")
 
     #Unsere Objekte benennen
-    my_bike = EBike(rider_mass=75.0, bike_mass=25.0) # 75 kg Fahrer, 25 kg Bike
-    my_motor = Motor(motor_constant=1.5, efficiency=0.85) # 85% Wirkungsgrad
-    battery_lipo = BatteryLiPo(capacity_nom_Ah=50.0, initial_soc=1.0) # 50 Ah Akku, 100% voll
-    battery_nmc = BatteryNMC(capacity_nom_Ah=50.0, initial_soc=1.0) # 50 Ah Akku, 100% voll
+    my_bike = EBike(rider_mass=75.0,        #75 kg Fahrer
+                    bike_mass=25.0,         #25 kg Bike
+                    rider_power_w=100)      #100 Watt leistet der Fahrer maximal
+
+    my_motor = Motor(motor_constant=1.5, 
+                     efficiency=0.85) # 85% Wirkungsgrad
+    
+    battery_lipo = BatteryLiPo(capacity_nom_Ah=50.0, 
+                               initial_soc=1.0) # 50 Ah Akku, 100% voll
+    
+    battery_nmc = BatteryNMC(capacity_nom_Ah=50.0, 
+                             initial_soc=1.0) # 50 Ah Akku, 100% voll
     
     physics = EBikePhysics(ebike=my_bike)
 
     #Listen für den Simulator vorbereiten
-    power_profile = []
-    duration_profile = []
+    total_power_profile: list[float] = []
+    rider_power_profile: list[float] = []
+    motor_power_profile: list[float] = []
+    motor_torque_profile: list[float] = []
+    motor_current_profile: list[float] = []
+    
+    duration_profile = list[float] = []
+
+    #Radradius für die Momenten Berechnung
+    wheel_radius_m = my_bike.get_wheel_radius_m()
 
     # Die Routendaten (Pandas Tabelle) durchlaufen
     # Wir starten bei Index 1, da wir für das Delta_t den Abstand zum vorherigen Punkt brauchen
@@ -96,50 +112,140 @@ def main():
         # Dauer dieses Streckenabschnitts berechnen (in Sekunden)
         t_current = route.data.loc[i, 'time']
         t_previous = route.data.loc[i-1, 'time']
+
         dt = (t_current - t_previous).total_seconds()
+        if dt <= 0.0:
+            logging.warning(f"ungültige Zeitdifferenz bei Index {i}: {dt:.2f} s")
+            dt = 0.0
+
         duration_profile.append(dt)
         
         # Werte aus der Tabelle auslesen
-        v = route.data.loc[i, 'speed_m_s']
-        a = route.data.loc[i, 'acceleration_m_s2']
-        s = route.data.loc[i, 'slope']
+        speed = route.data.loc[i, 'speed_m_s']
+        acceleration = route.data.loc[i, 'acceleration_m_s2']
+        slope = route.data.loc[i, 'slope']
         
-        # Mechanische Leistung vom Physik-Rechner berechnen lassen
-        p_mech = physics.calculate_power(speed=v, acceleration=a, slope=s)
-        power_profile.append(p_mech)
+        #1. Schritt: gesamte mechanische Leistung berechen (Fahrer und Motor)
+        total_power = physics.calculate_power(
+            speed=speed,
+            acceleration=acceleration,
+            slope=slope
+        )
 
-    #Maximale Leistung während der Fahrt
-    max_power_w = physics.calculate_max_power(power_profile)
+        #2. Schritt: Leistung auf Fahrer und Motor aufteilen
+        rider_power, motor_power = physics.split_power(total_power=total_power)
 
-    
+        #3. Schritt: Motordrehmoment berechnen (hier wird nur die motor_power übergeben, ohne Fahrerleitstung)
+        motor_torque = my_motor.get_torque_from_power(
+            motor_power=motor_power,
+            speed=speed,
+            wheel_radius=wheel_radius_m    
+        )
 
+        #4. Schritt: Motorstrom wird über das Motormoment berechnet
+        motor_current = my_motor.get_current(torque=motor_torque)
+
+        #Ergebnisse in den erstellten Listen speichern
+        total_power_profile.append(total_power)
+        rider_power_profile.append(rider_power)
+        motor_power_profile.append(motor_power)
+        motor_torque_profile.append(motor_torque)
+        motor_current_profile.append(motor_current)
+
+#Werte für die Diagramme im DataFrame speichern
+    route.data["total_power_w"] = ([0.0] + total_power_profile)
+    route.data["rider_power_w"] = ([0.0] + rider_power_profile)
+    route.data["motor_power_w"] = ([0.0] + motor_power_profile)
+    route.data["motor_torque_nm"] = ([0.0] + motor_torque_profile)
+    route.data["motor_current_a"] = ([0.0] + motor_current_profile)
+
+#Maximalwerte Berechnen, vielleicht zeichne ich die Punkte in den Diagrammen ein
+    #Maximale Gesamtleistung
+    max_total_power_w = physics.calculate_max_power(total_power_profile)
+
+    #Maximale Fahrerleistung
+    max_rider_power_w = physics.calculate_max_power(rider_power_profile)
+
+    #Maximale Motorleistung
+    max_motor_power_w = physics.calculate_max_power(motor_power_profile)
+
+    #Maximales Motordrehmoment
+    max_motor_torque_nm = max(motor_torque_profile, default=0.0)
+
+    #Maximaler Motorstrom
+    max_motor_current_a = max(motor_current_profile, default=0.0)
+
+#Maximalwerte ausgeben
+    print("\n---------- Leistungsdaten ----------")
+    print(
+        f"Maximale Gesamtleistung: "
+        f"{max_total_power_w:.2f} W"
+    )
+    print(
+        f"Maximale Fahrerleistung: "
+        f"{max_rider_power_w:.2f} W"
+    )
+    print(
+        f"Maximale Motorleistung: "
+        f"{max_motor_power_w:.2f} W"
+    )
+    print(
+        f"Maximales Motordrehmoment: "
+        f"{max_motor_torque_nm:.2f} Nm"
+    )
+    print(
+        f"Maximaler Motorstrom: "
+        f"{max_motor_current_a:.2f} A"
+    )
+
+    #TESTAUSGABE DANCH LÖSCHEN!!!!!!!!!!!!!!!!!!!!!!
+    print(
+        route.data[
+            [
+                "total_power_w",
+                "rider_power_w",
+                "motor_power_w",
+                "motor_torque_nm",
+                "motor_current_a"
+            ]
+        ].head(10)
+    )
     #--------------------------------------------------------------------------------    
     #Simulation für LiPo
+    #--------------------------------------------------------------------------------
     print("\nStarte Simulation für LiPo Akku")
 
     my_battery = battery_lipo
 
     #Simulator starten
-    simulator_lipo = EBikeSimulator(e_bike=my_bike, battery=my_battery, e_motor=my_motor)
-    simulator_lipo.simulate(power_profile=power_profile, duration_profile=duration_profile)
+    simulator_lipo = EBikeSimulator(e_bike=my_bike, 
+                                    battery=my_battery, 
+                                    e_motor=my_motor)
+    
+    simulator_lipo.simulate(power_profile=motor_power_profile, 
+                            duration_profile=duration_profile)
 
     #Ergebnisse ausgeben
     print("Simulation für LiPO fertig.")
     #mit __str__ im battery_pack wird der verbleibende SoC und SPannung berechnet
     #Ergebnisse ausgeben
-    print(f"Maximale Leistung (gesamt): {max_power_w:.2f} W")
     print(f"Ergebnis LiPo: {battery_lipo}")  
-
+    #--------------------------------------------------------------------------------
     #Simulation für NMC
+    #--------------------------------------------------------------------------------
     print("\nSimulation für NMC Akku")
 
     my_battery = battery_nmc
     #Simulator starten
-    simulator_nmc = EBikeSimulator(e_bike=my_bike, battery=my_battery, e_motor=my_motor)
-    simulator_nmc.simulate(power_profile=power_profile, duration_profile=duration_profile)
+    simulator_nmc = EBikeSimulator(e_bike=my_bike, 
+                                   battery=my_battery, 
+                                   e_motor=my_motor)
+    
+    simulator_nmc.simulate(power_profile=motor_power_profile, 
+                           duration_profile=duration_profile)
+    
     print("Simulation für NMC fertig.")
     #Ergebnisse ausgeben
-    print(f"Maximale Leistung (gesamt): {max_power_w:.2f} W")
     print(f"Ergebnis NMC: {battery_nmc}")   
     print()
 
