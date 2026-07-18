@@ -31,7 +31,9 @@ class EBikeSimulator:
         self.voltage_profile.append(self.battery.voltage())
         self.soc_profile.append(self.battery.soc)
         
-
+        # "Merker", damit wird die Konsole nicht zugespammt, sobald der akku leer ist
+        empty_warning_printed = False
+        full_warning_printed = False
     
         #iterieren über das Drehmoment (t)
         for t, d in zip(torque_profile, duration_profile):   
@@ -41,11 +43,15 @@ class EBikeSimulator:
 
             # Sicherheitsabfrage ob Akku leer
             if self.battery.is_empty() and i > 0:
-                logging.warning("Batterie ist leer :(")
+                if not empty_warning_printed:
+                    logging.warning("Batterie ist leer :(")
+                    empty_warning_printed = True #gegen log spamming
                 i = 0.0  # Strom auf 0 setzen, Akku leer
 
             elif self.battery.is_full() and i < 0:
-                logging.warning("Batter ist voll :)")
+                if not full_warning_printed:
+                    logging.warning("Batter ist voll :)")
+                    full_warning_printed = True
                 i = 0.0  # Ladestrom auf 0, Akku voll 
 
             # Stromverlauf speichern

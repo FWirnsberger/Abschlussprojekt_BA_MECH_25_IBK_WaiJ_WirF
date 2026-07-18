@@ -77,7 +77,7 @@ def main():
     #Unsere Objekte benennen
     my_bike = EBike(rider_mass = 70.0, bike_mass = 10.0) # 70 kg Fahrer, 10 kg Bike
     my_motor = Motor(motor_constant = 1.5, efficiency = 0.85) # 85% Wirkungsgrad
-    battery_lipo = BatteryLiPo(capacity_nom_Ah = 50.0, initial_soc = 1.0) # 50 Ah Akku, 100% voll
+    battery_lipo = BatteryLiPo(capacity_nom_Ah = 15.0, initial_soc = 1.0) # 50 Ah Akku, 100% voll
     battery_nmc = BatteryNMC(capacity_nom_Ah = 50.0, initial_soc = 1.0) # 50 Ah Akku, 100% voll
     
     physics = EBikePhysics(ebike=my_bike)
