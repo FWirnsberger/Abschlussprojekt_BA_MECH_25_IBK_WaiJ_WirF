@@ -4,6 +4,7 @@ from src.models.gps_point import GPSPoint
 from src.models.e_bike import EBike
 from src.models.motor import Motor
 from src.models.battery_lipo import BatteryLiPo
+from src.models.battery_nmc import BatteryNMC
 from src.calculations.e_bike_physics import EBikePhysics
 from src.simulation.e_bike_simulator import EBikeSimulator
 
@@ -79,7 +80,8 @@ def main():
     #Unsere Objekte benennen
     my_bike = EBike(rider_mass=75.0, bike_mass=25.0) # 75 kg Fahrer, 25 kg Bike
     my_motor = Motor(motor_constant=1.5, efficiency=0.85) # 85% Wirkungsgrad
-    my_battery = BatteryLiPo(capacity_nom_Ah=50.0, initial_soc=1.0) # 15 Ah Akku, 100% voll
+    battery_lipo = BatteryLiPo(capacity_nom_Ah=50.0, initial_soc=1.0) # 50 Ah Akku, 100% voll
+    battery_nmc = BatteryNMC(capacity_nom_Ah=50.0, initial_soc=1.0) # 50 Ah Akku, 100% voll
     
     physics = EBikePhysics(ebike=my_bike)
 
@@ -106,22 +108,39 @@ def main():
         p_mech = physics.calculate_power(speed=v, acceleration=a, slope=s)
         power_profile.append(p_mech)
 
-    
-
     #Maximale Leistung während der Fahrt
     max_power_w = physics.calculate_max_power(power_profile)
 
     
 
+        
+    #Simulation für LiPo
+    print("\nStarte Simulation für LiPo Akku")
     #Simulator starten
-    simulator = EBikeSimulator(e_bike=my_bike, battery=my_battery, e_motor=my_motor)
-    simulator.simulate(power_profile=power_profile, duration_profile=duration_profile)
+    simulator_lipo = EBikeSimulator(e_bike=my_bike, battery=battery_lipo, e_motor=my_motor)
+    simulator_lipo.simulate(power_profile=power_profile, duration_profile=duration_profile)
+    #Ergebnisse ausgeben
+    print("Simulation fertig.")
+    #mit __str__ im battery_pack wird der verbleibende SoC und SPannung berechnet
+    print(f"Ergebnis LiPo: {battery_lipo}")
 
+    #Simulation für NMC
+    print("\nStarte Simulation für NMC Akku")
+    #Simulator starten
+    simulator_nmc = EBikeSimulator(e_bike=my_bike, battery=battery_nmc, e_motor=my_motor)
+    simulator_nmc.simulate(power_profile=power_profile, duration_profile=duration_profile)
     #Ergebnisse ausgeben
     print("Simulation erfolgreich beendet!")
     print(f"Maximale Leistung (gesamt): {max_power_w:.2f} W")
     print(f"Verbleibender Akku (SoC): {my_battery.soc * 100:.2f} %")
     print(f"Endspannung unter Last:   {my_battery.voltage():.2f} V")
+    print(f"Ergebnis NMC: {battery_nmc}")   
+
+
+
+    # brauchen wir nicht mehr, da im battery_pack das mit __str__ ausgegeben wird 
+    #print(f"Verbleibender Akku (SoC): {current_battery.soc * 100:.2f} %")
+    #print(f"Endspannung unter Last:   {current_battery.voltage():.2f} V")
     #---------------------------------------------------------------
 
     #---------------------------------------------------------------
