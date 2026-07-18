@@ -15,6 +15,7 @@ class EBikeSimulator:
         # Listen zum Speichern der Ergebnisse (für Plotting + Resultate)
         self.voltage_profile = []
         self.ampere_profile = []
+        self.soc_profile = []
 
     def simulate(self, torque_profile: list[float], duration_profile: list[float]) -> None:
         """
@@ -24,9 +25,12 @@ class EBikeSimulator:
         # Listen leeren, falls die Simulation mehrmals gestartet wird
         self.voltage_profile = []
         self.ampere_profile = []
+        self.soc_profile = []
         
         # Initialisierung: Erste Spannung bei t=0 eintragen
         self.voltage_profile.append(self.battery.voltage())
+        self.soc_profile.append(self.battery.soc)
+        
 
     
         #iterieren über das Drehmoment (t)
@@ -54,5 +58,6 @@ class EBikeSimulator:
             # neuen SoC abfragen und in den Verlauf eintragen
             v = self.battery.voltage(current=i)
             self.voltage_profile.append(v)
+            self.soc_profile.append(self.battery.soc)
 
     logging.info("Simulation erfolgreich durchgeführt.")

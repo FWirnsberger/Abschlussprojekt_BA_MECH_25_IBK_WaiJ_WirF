@@ -101,6 +101,7 @@ def main():
         dt = route.data.loc[i, 'duration_s']
         duration_profile.append(dt)
         
+        
         # Mechanische Leistung vom Physik-Rechner berechnen lassen
         f_total, p_mech = physics.calculate_force_and_power(speed = v, acceleration = a, slope = s)
         power_profile.append(p_mech)
@@ -110,12 +111,24 @@ def main():
         torque = my_motor.get_torque(force = f_total, wheel_radius = wheel_radius)
         torque_profile.append(torque)
 
+        # Für die Plots motor daten neue Spalten in die Tabelle speichern 
+        # [0.0] davor, da die Schleife bei Index 1 startet
+    route.data['power_W'] = [0.0] + power_profile
+    route.data['torque_Nm'] = [0.0] + torque_profile
+
         
     #Simulation für LiPo
     print("\nStarte Simulation für LiPo Akku")
     #Simulator starten
     simulator_lipo = EBikeSimulator(e_bike = my_bike, battery = battery_lipo, e_motor = my_motor)
     simulator_lipo.simulate(torque_profile = torque_profile, duration_profile = duration_profile)
+    
+    # Lipo ergebnisse für Plot speichern
+    # Strom war in der schleife, also [0.0] davor. Voltage und SoC haben den schon den richtigen startwert.
+    route.data['current_A_lipo'] = [0.0] + simulator_lipo.ampere_profile
+    route.data['voltage_V_lipo'] = simulator_lipo.voltage_profile
+    route.data['soc_lipo'] = simulator_lipo.soc_profile
+    
     #Ergebnisse ausgeben
     print("Simulation fertig.")
     #mit __str__ im battery_pack wird der verbleibende SoC und SPannung berechnet
@@ -126,6 +139,12 @@ def main():
     #Simulator starten
     simulator_nmc = EBikeSimulator(e_bike = my_bike, battery = battery_nmc, e_motor = my_motor)
     simulator_nmc.simulate(torque_profile = torque_profile, duration_profile = duration_profile)
+
+    # NMC ergebnisse für Plot speichern
+    # Strom war in der schleife, also [0.0] davor. Voltage und SoC haben den schon den richtigen startwert.
+    route.data['current_A_nmc'] = [0.0] + simulator_nmc.ampere_profile
+    route.data['voltage_V_nmc'] = simulator_nmc.voltage_profile
+    route.data['soc_nmc'] = simulator_nmc.soc_profile
     #Ergebnisse ausgeben
     print("Simulation fertig")
     print(f"Ergebnis NMC: {battery_nmc}")   
