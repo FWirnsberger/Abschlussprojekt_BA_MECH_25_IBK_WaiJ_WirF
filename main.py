@@ -113,29 +113,35 @@ def main():
 
     
 
-        
+    #--------------------------------------------------------------------------------    
     #Simulation für LiPo
     print("\nStarte Simulation für LiPo Akku")
+
+    my_battery = battery_lipo
+
     #Simulator starten
-    simulator_lipo = EBikeSimulator(e_bike=my_bike, battery=battery_lipo, e_motor=my_motor)
+    simulator_lipo = EBikeSimulator(e_bike=my_bike, battery=my_battery, e_motor=my_motor)
     simulator_lipo.simulate(power_profile=power_profile, duration_profile=duration_profile)
+
     #Ergebnisse ausgeben
-    print("Simulation fertig.")
+    print("Simulation für LiPO fertig.")
     #mit __str__ im battery_pack wird der verbleibende SoC und SPannung berechnet
-    print(f"Ergebnis LiPo: {battery_lipo}")
+    #Ergebnisse ausgeben
+    print(f"Maximale Leistung (gesamt): {max_power_w:.2f} W")
+    print(f"Ergebnis LiPo: {battery_lipo}")  
 
     #Simulation für NMC
-    print("\nStarte Simulation für NMC Akku")
-    #Simulator starten
-    simulator_nmc = EBikeSimulator(e_bike=my_bike, battery=battery_nmc, e_motor=my_motor)
-    simulator_nmc.simulate(power_profile=power_profile, duration_profile=duration_profile)
-    #Ergebnisse ausgeben
-    print("Simulation erfolgreich beendet!")
-    print(f"Maximale Leistung (gesamt): {max_power_w:.2f} W")
-    print(f"Verbleibender Akku (SoC): {my_battery.soc * 100:.2f} %")
-    print(f"Endspannung unter Last:   {my_battery.voltage():.2f} V")
-    print(f"Ergebnis NMC: {battery_nmc}")   
+    print("\nSimulation für NMC Akku")
 
+    my_battery = battery_nmc
+    #Simulator starten
+    simulator_nmc = EBikeSimulator(e_bike=my_bike, battery=my_battery, e_motor=my_motor)
+    simulator_nmc.simulate(power_profile=power_profile, duration_profile=duration_profile)
+    print("Simulation für NMC fertig.")
+    #Ergebnisse ausgeben
+    print(f"Maximale Leistung (gesamt): {max_power_w:.2f} W")
+    print(f"Ergebnis NMC: {battery_nmc}")   
+    print()
 
 
     # brauchen wir nicht mehr, da im battery_pack das mit __str__ ausgegeben wird 
