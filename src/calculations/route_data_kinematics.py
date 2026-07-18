@@ -47,6 +47,7 @@ class RouteData:
         speeds = [0.0]
         accelerations = [0.0]
         slopes = [0.0]
+        durations = [0.0]
         
         # Wir iterieren durch die Tabelle ab der zweiten zeile (start index 1)
         for i in range(1, len(self.data)):
@@ -64,6 +65,7 @@ class RouteData:
             
             # Zeitdifferenz [s] (dt)
             dt = p_prev.get_time_difference_to(p_curr)
+            durations.append(dt)
             
             # Geschwindigkeit [m/s] (v = ds / dt)
             if dt > 0:
@@ -96,6 +98,7 @@ class RouteData:
         self.data['speed_m_s'] = speeds
         self.data['acceleration_m_s2'] = accelerations
         self.data['slope'] = slopes
+        self.data['duration_s'] = durations
         
         logging.info("Kinematik erfolgreich berechnet.")
 

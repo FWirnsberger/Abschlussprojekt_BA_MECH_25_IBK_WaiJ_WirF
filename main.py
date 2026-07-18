@@ -75,7 +75,7 @@ def main():
     print("\n---------- Simulation startet ----------")
 
     #Unsere Objekte benennen
-    my_bike = EBike(rider_mass = 75.0, bike_mass = 25.0) # 75 kg Fahrer, 25 kg Bike
+    my_bike = EBike(rider_mass = 70.0, bike_mass = 10.0) # 70 kg Fahrer, 10 kg Bike
     my_motor = Motor(motor_constant = 1.5, efficiency = 0.85) # 85% Wirkungsgrad
     battery_lipo = BatteryLiPo(capacity_nom_Ah = 50.0, initial_soc = 1.0) # 50 Ah Akku, 100% voll
     battery_nmc = BatteryNMC(capacity_nom_Ah = 50.0, initial_soc = 1.0) # 50 Ah Akku, 100% voll
@@ -93,16 +93,13 @@ def main():
     # Wir starten bei Index 1, da wir für das Delta_t den Abstand zum vorherigen Punkt brauchen
     for i in range(1, len(route.data)):
         
-        # Dauer dieses Streckenabschnitts berechnen (in Sekunden)
-        t_current = route.data.loc[i, 'time']
-        t_previous = route.data.loc[i-1, 'time']
-        dt = (t_current - t_previous).total_seconds()
-        duration_profile.append(dt)
         
         # Werte aus der Tabelle auslesen
         v = route.data.loc[i, 'speed_m_s']
         a = route.data.loc[i, 'acceleration_m_s2']
         s = route.data.loc[i, 'slope']
+        dt = route.data.loc[i, 'duration_s']
+        duration_profile.append(dt)
         
         # Mechanische Leistung vom Physik-Rechner berechnen lassen
         f_total, p_mech = physics.calculate_force_and_power(speed = v, acceleration = a, slope = s)
