@@ -100,7 +100,7 @@ def main():
     motor_torque_profile: list[float] = []
     motor_current_profile: list[float] = []
     
-    duration_profile = list[float] = []
+    duration_profile: list[float] = []
 
     #Radradius für die Momenten Berechnung
     wheel_radius_m = my_bike.get_wheel_radius_m()
