@@ -31,10 +31,13 @@ def main():
     #Teilstrecken, Geschwindigkeiten, Beschleunigungen und Steigungen berechnen
     print() #Absatz
     route.calculate_kinematics()
+    route.filter_speed(window_size=5)       #Geschwindigkeit mit Fenstergröße 5 filtern
+    route.calculate_acceleration(max_acceleration_m_s2=1.0) #Beschleunigung aus der gefilterten Geschwindigkeit berechnen und auf ±3.5 m/s² begrenzen
 
+    
     # Test ob Daten richtig sind
-    print(route.data[['time', 'distance_m', 'speed_m_s', 'acceleration_m_s2', 'slope']].head())
-
+    print(route.data[['time', 'distance_m', 'speed_raw_m_s', 'speed_m_s', 'acceleration_raw_m_s2', 'acceleration_m_s2', 'slope']].head(10))
+    
     #---------------------------------------------------------------
     #Hier werden die statischen Parameter berechnet
     #---------------------------------------------------------------

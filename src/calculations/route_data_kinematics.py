@@ -90,13 +90,13 @@ class RouteData:
 
             slopes.append(slope)
 
-            #Die Ergibnisse werden in einem DataFrame gespeichert
-            self.data["distance_m"] = distances
-            self.data["delta_time_s"] = time_differences
-            self.data["speed_raw_m_s"] = raw_speeds
-            self.data["slope"] = slopes
+        #Die Ergibnisse werden in einem DataFrame gespeichert
+        self.data["distance_m"] = distances
+        self.data["delta_time_s"] = time_differences
+        self.data["speed_raw_m_s"] = raw_speeds
+        self.data["slope"] = slopes
 
-            logging.info("Distanz, Rohgeschwindigkeit, Zeitdifferenz und Steigung WURDEN berechnet.")
+        logging.info("Distanz, Rohgeschwindigkeit, Zeitdifferenz und Steigung WURDEN berechnet.")
 
     def filter_speed(self, window_size: int = 5)-> None: 
         """
@@ -176,15 +176,15 @@ class RouteData:
 
         #jetzt wird die zuvor berechnete Tabelle durchlaufen
         for i in range(1, len(self.data)):
-            current_speed = self.data[i, "speed_m_s"]           #aktuelle gefilterte Geschwindigkeit
-            previous_speed = self.data[i - 1, "speed_m_s"]      #vorherige gefilterte Geschwindigkeit
+            current_speed = self.data.loc[i, "speed_m_s"]           #aktuelle gefilterte Geschwindigkeit
+            previous_speed = self.data.loc[i - 1, "speed_m_s"]      #vorherige gefilterte Geschwindigkeit
 
             #Zeitdifferenz vom aktuellen Streckenabschnitt berechnen
             dt = self.data.loc[i, "delta_time_s"]
 
             #Beschleunigung berechnen
-            if dt > pd.Timedelta(seconds=0):    #damit kann float (dt) mit integer (0) verglichen werden ohne Konflikte
-                raw_acceleration = (current_speed - previous_speed) / dt.total_seconds()
+            if dt > 0:    #damit kann float (dt) mit integer (0) verglichen werden ohne Konflikte
+                raw_acceleration = (current_speed - previous_speed) / dt
             else: 
                 raw_acceleration = 0.0
 
@@ -200,15 +200,15 @@ class RouteData:
 
             accelerations.append(limited_acceleration)
 
-            #Rohe und die begrenzte Beschleunigung berechnen
-            self.data["acceleration_raw_m_s2"] = raw_accelerations
-            self.data["acceleration_m_s2"] = accelerations
+        #Rohe und die begrenzte Beschleunigung berechnen
+        self.data["acceleration_raw_m_s2"] = raw_accelerations
+        self.data["acceleration_m_s2"] = accelerations
 
-            #Zur Information werden die Anzahl der begrenzten Werte berechnet
-            limited_count = (self.data["acceleration_raw_m_s2"] != self.data["acceleration_m_s2"]).sum()
+        #Zur Information werden die Anzahl der begrenzten Werte berechnet
+        limited_count = (self.data["acceleration_raw_m_s2"] != self.data["acceleration_m_s2"]).sum()
 
-            logging.info(f"Es wurden {limited_count} Beschleunigungswerte auf +- {max_acceleration_m_s2:.2f} begrenzt.")
-            logging.info("Beschleunigung wurde berechnet.")
+        logging.info(f"Es wurden {limited_count} Beschleunigungswerte auf +- {max_acceleration_m_s2:.2f} begrenzt.")
+        logging.info("Beschleunigung wurde berechnet.")
 
     def calculate_total_distance(self) -> float:
         """
