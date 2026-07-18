@@ -32,10 +32,13 @@ def main():
     #Teilstrecken, Geschwindigkeiten, Beschleunigungen und Steigungen berechnen
     print() #Absatz
     route.calculate_kinematics()
+    route.filter_speed(window_size=5)       #Geschwindigkeit mit Fenstergröße 5 filtern
+    route.calculate_acceleration(max_acceleration_m_s2=1.0) #Beschleunigung aus der gefilterten Geschwindigkeit berechnen und auf ±3.5 m/s² begrenzen
 
+    
     # Test ob Daten richtig sind
-    print(route.data[['time', 'distance_m', 'speed_m_s', 'acceleration_m_s2', 'slope']].head())
-
+    print(route.data[['time', 'distance_m', 'speed_raw_m_s', 'speed_m_s', 'acceleration_raw_m_s2', 'acceleration_m_s2', 'slope']].head(10))
+    
     #---------------------------------------------------------------
     #Hier werden die statischen Parameter berechnet
     #---------------------------------------------------------------
@@ -105,6 +108,11 @@ def main():
         p_mech = physics.calculate_power(speed=v, acceleration=a, slope=s)
         power_profile.append(p_mech)
 
+    #Maximale Leistung während der Fahrt
+    max_power_w = physics.calculate_max_power(power_profile)
+
+    
+
         
     #Simulation für LiPo
     print("\nStarte Simulation für LiPo Akku")
@@ -123,6 +131,9 @@ def main():
     simulator_nmc.simulate(power_profile=power_profile, duration_profile=duration_profile)
     #Ergebnisse ausgeben
     print("Simulation erfolgreich beendet!")
+    print(f"Maximale Leistung (gesamt): {max_power_w:.2f} W")
+    print(f"Verbleibender Akku (SoC): {my_battery.soc * 100:.2f} %")
+    print(f"Endspannung unter Last:   {my_battery.voltage():.2f} V")
     print(f"Ergebnis NMC: {battery_nmc}")   
 
 

@@ -35,69 +35,180 @@ class RouteData:
         logging.info(f"{len(self._points)} GPSPoint-Objekte erfolgreich geladen.")
 
     def calculate_kinematics(self) -> None:
-        """Berechnet Distanz, Geschwindigkeit, Beschleunigung und Steigung zwischen den GPS-Punkten."""
+        """
+        Hier wird die Distanz, Rohgeschwindigkeit, Zeitdifferenz und Steigung zwischen zwei aufeinanderfolgenden 
+        GPS Punkten.
+        Anschließend wird die Geschwindigkeit gefiltert und daraus die Beschleunigung berechnet, da die Ausreißer 
+        die Ergebnisse der Leistungsberechnung verfälschen
+        """
+        #Fehlererkenneung
         if self.data is None:
             logging.error("Fehler: Keine Daten geladen!")
             return
+        
+        logging.info("Distanz, Rohgeschwindigkeit, Zeitdifferenz und Steigung WERDEN berechnet.")
 
-        logging.info("Berechne Kinematik (Distanz, Geschwindigkeit, Beschleunigung, Steigung): ")
+        distances = [0.0]               #Liste zum speichern der einzelnen Distanzen zw. den Punkten
         
-        # Listen zum Speichern der Ergebnisse (start bei 0.0)
-        distances = [0.0]
-        speeds = [0.0]
-        accelerations = [0.0]
-        slopes = [0.0]
-        
-        # Wir iterieren durch die Tabelle ab der zweiten zeile (start index 1)
+        raw_speeds = [float("nan")]     #1. Wert kann nicht berechnet werden, da kein vorheriger Punkt existiert
+
+        time_differences = [0.0]        #Liste für Zeiten
+
+        slopes = [0.0]                  #Liste für Steigungen
+
+        #die Datentabelle wird durchlaufen
         for i in range(1, len(self.data)):
-            p_prev = self._points[i-1] # Der vorherige Punkt A
-            p_curr = self._points[i]   # Der aktuelle punkt B
-            
-            # Koordinaten von Punkt B
-            lat2 = self.data.loc[i, 'lat']
-            lon2 = self.data.loc[i, 'lon']
-            
-            # Distanz [m] (ds)
-            # Punkt A berechnet die Distanz zu Punkt B
+            #vorheriger und aktualler GPS Punkt
+            p_prev = self._points[i - 1]
+            p_curr = self._points[i]
+
+            #Distanz zwischen den beiden Punkten
             ds = p_prev.get_distance_to(p_curr)
             distances.append(ds)
-            
-            # Zeitdifferenz [s] (dt)
-            dt = p_prev.get_time_difference_to(p_curr)
-            
-            # Geschwindigkeit [m/s] (v = ds / dt)
-            if dt > 0:
-                v = ds / dt
-            else:
-                v = 0.0
-                
-            speeds.append(v)
 
-            # Beschleunigung (a) [m/s^2] (a = (v - v_prev) / dt)
-            v_prev = speeds[i-1]
+            #Zeitdifferenz der beiden Punkte
+            dt = p_prev.get_time_difference_to(p_curr)
+            time_differences.append(dt)
+
+            #Rohgeschwindigkeit berechnen in m/s
             if dt > 0:
-                a = (v - v_prev) / dt
+                raw_speed = ds / dt
             else:
-                a = 0.0
-            accelerations.append(a)
-            
-            # Steigung
-            # mit Getter (.ele), um höhe abzufragen
+                raw_speed = float("nan")    #wenn dt < 0 wird kein gültiger Wert definiert
+                logging.warning(f"ungültige Zeitdifferenz {dt:.2f} bei Index {i} !")
+
+            raw_speeds.append(raw_speed)
+
+            #Höhenunterschied berechnen in m
             dh = p_curr.ele - p_prev.ele
-            
+
+            #Steigung berechnen
             if ds > 0:
-                slope = dh / ds  
+                slope = dh /ds
             else:
-                slope = 0.0
+                slope = 0
+
             slopes.append(slope)
-            
-        # Ergebnisse als neue Spalten zum DataFrame hinzufügen
-        self.data['distance_m'] = distances
-        self.data['speed_m_s'] = speeds
-        self.data['acceleration_m_s2'] = accelerations
-        self.data['slope'] = slopes
+
+        #Die Ergibnisse werden in einem DataFrame gespeichert
+        self.data["distance_m"] = distances
+        self.data["delta_time_s"] = time_differences
+        self.data["speed_raw_m_s"] = raw_speeds
+        self.data["slope"] = slopes
+
+        logging.info("Distanz, Rohgeschwindigkeit, Zeitdifferenz und Steigung WURDEN berechnet.")
+
+    def filter_speed(self, window_size: int = 5)-> None: 
+        """
+        Hier wird die Rohgeschwindigkeit mit einem Medianfilter geglättet
+        Der Medianfilter entfernt Ausreißer, indem er die Ausreißer durch den Median seiner benachbarten Werte ersetzt.
         
-        logging.info("Kinematik erfolgreich berechnet.")
+        Argumente
+            window_size:
+                Anzahl der Messwerte innerhalb des Filterfensters.
+                Die Fenstergröße muss eine ungerade Zahl sein.
+        """
+        #Fehlererkennung
+        if self.data is None:
+            logging.error("Fehler: Keine Daten geladen!")
+            return
+        
+        #wurde die Rohgeschwindigkeit berechnet?
+        if "speed_raw_m_s" not in self.data.columns:
+            logging.error("Fehler: Die Rohgeschwindigkeit wurde nicht berechnet!")
+            return
+        
+        #Fenstergröße für Medianfilter überprüfen
+        #Fenstergröße ist die Anzahl der Werte die für den Median betrachtet werden
+        if window_size < 3:
+            raise ValueError("Nur Fenstergrößen grüßer 3 zulässig.")
+        
+        if window_size % 2 == 0:
+            raise ValueError("Fenstergröße muss einer ungeraden Zahl entsprechen!")
+        
+        logging.info(f"Die Geschwindigkeit wird mit einem Medianfilter und einer Fenstergröße von {window_size} berechnet.")
+
+        #Medianfilter wird angewandt
+        self.data["speed_m_s"] = (self.data["speed_raw_m_s"].rolling(
+                window=window_size,
+                center=True,
+                min_periods=1   
+            ).median()
+        )
+        
+        #An Anfang und Ende fehlen die Werte, die werden aufgefüllt
+        #bfill - backward fill, ffill - forward fill
+        self.data["speed_m_s"] = (self.data["speed_m_s"].bfill().ffill())
+
+        logging.info("Geschwindigkeit wurde gefiltert")
+
+
+    def calculate_acceleration(self, max_acceleration_m_s2: float = 3.5) -> None:       #alle Beschleunigugen > 3.5 werden "abgeschnitten" um unrealistische Werte zu vermeiden
+        """
+        Hier wird die Beschleunigung aus der gefilterten Geschwindigkeit berechnet.
+        Danach wird die Beschleunigung in einem realistischen und optimistischen Bereich von
+        +- 3.5 m_s2 begrenzt
+
+        Argumente: 
+            max_acceleration_m_s2:
+                max Betrag der Beschleunigung (selbst festgelegt)
+        """
+
+        #Fehlererkennung-Geschwindigkeit vorhanden?
+        if "speed_m_s" not in self.data.columns:
+            logging.error("Fehler: Die Geschwindigkeit wurde noch nicht gefiltert.")
+            return
+        
+        #Fehlererkennung-Zeitdifferenzen vorhanden?
+        if "delta_time_s" not in self.data.columns:
+            logging.error("Fehler: Die Zeitdifferenz wurde noch nicht berechnet.")
+            return
+        
+        #Fehlererkennung-liegt die max. zulässige Beschleunigung in einem plausiblen Bereich?
+        if max_acceleration_m_s2 <= 0:
+            raise ValueError("Die max. zulässige Beschleunigung muss größer 0 sein.")
+            
+        logging.info("Beschleunigung aus der gefilterten Geschwindigkeit wird berechnet.")
+
+        #Listen zum Speichern der Ergebnisse
+        raw_accelerations = [0.0]
+        accelerations = [0.0]
+
+        #jetzt wird die zuvor berechnete Tabelle durchlaufen
+        for i in range(1, len(self.data)):
+            current_speed = self.data.loc[i, "speed_m_s"]           #aktuelle gefilterte Geschwindigkeit
+            previous_speed = self.data.loc[i - 1, "speed_m_s"]      #vorherige gefilterte Geschwindigkeit
+
+            #Zeitdifferenz vom aktuellen Streckenabschnitt berechnen
+            dt = self.data.loc[i, "delta_time_s"]
+
+            #Beschleunigung berechnen
+            if dt > 0:    #damit kann float (dt) mit integer (0) verglichen werden ohne Konflikte
+                raw_acceleration = (current_speed - previous_speed) / dt
+            else: 
+                raw_acceleration = 0.0
+
+            raw_accelerations.append(raw_acceleration)
+
+            #Beschleunigung wird auf den bestimmten Bereich begrenzt
+            limited_acceleration = max(
+                -max_acceleration_m_s2, 
+                min(
+                    raw_acceleration, max_acceleration_m_s2
+                    )
+            )
+
+            accelerations.append(limited_acceleration)
+
+        #Rohe und die begrenzte Beschleunigung berechnen
+        self.data["acceleration_raw_m_s2"] = raw_accelerations
+        self.data["acceleration_m_s2"] = accelerations
+
+        #Zur Information werden die Anzahl der begrenzten Werte berechnet
+        limited_count = (self.data["acceleration_raw_m_s2"] != self.data["acceleration_m_s2"]).sum()
+
+        logging.info(f"Es wurden {limited_count} Beschleunigungswerte auf +- {max_acceleration_m_s2:.2f} begrenzt.")
+        logging.info("Beschleunigung wurde berechnet.")
 
     def calculate_total_distance(self) -> float:
         """
