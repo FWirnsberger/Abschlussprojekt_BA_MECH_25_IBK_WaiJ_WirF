@@ -7,6 +7,7 @@ from src.models.battery_lipo import BatteryLiPo
 from src.models.battery_nmc import BatteryNMC
 from src.calculations.e_bike_physics import EBikePhysics
 from src.simulation.e_bike_simulator import EBikeSimulator
+from src.calculations.battery_sizing import BatterySizing
 
 #für Plots
 from src.reporting.plot_generator import PlotGenerator
@@ -84,13 +85,7 @@ def main():
 
     my_motor = Motor(motor_constant = 1.5, 
                      efficiency = 0.85) # 85% Wirkungsgrad
-    
-    battery_lipo = BatteryLiPo(capacity_nom_Ah = 50.0, 
-                               initial_soc = 1.0) # 50 Ah Akku, 100% voll
-    
-    battery_nmc = BatteryNMC(capacity_nom_Ah = 50.0, 
-                             initial_soc = 1.0) # 50 Ah Akku, 100% voll
-    
+      
     physics = EBikePhysics(ebike = my_bike)
 
     #Listen für den Simulator vorbereiten
@@ -191,18 +186,59 @@ def main():
         f"{max_motor_current_a:.2f} A"
     )
 
-    #TESTAUSGABE DANCH LÖSCHEN!!!!!!!!!!!!!!!!!!!!!!
-    print(
-        route.data[
-            [
-                "total_power_w",
-                "rider_power_w",
-                "motor_power_w",
-                "motor_torque_nm",
-                "motor_current_a"
-            ]
-        ].head(10)
+    #--------------------------------------------------------------------------------    
+    #Energiebedarf und Batteriekapazität berechnen
+    #--------------------------------------------------------------------------------
+    battery_sizing = BatterySizing(nominal_voltage_v = 37.0, reserve_factor = 0.2)
+    
+    #Elektrischer Energiebedarf der Strecke ohne Reserve
+    energy_requirement_wh = (
+        battery_sizing.calculate_energy_requirement(
+            motor_power_profile = motor_power_profile,
+            duration_profile = duration_profile,
+            motor_efficiency = my_motor.efficiency
+        )
     )
+
+    #benötigte Energie inkl der verwendeten Reserve
+    required_energy_wh = (
+        battery_sizing.calculate_required_energy(
+            energy_requirement_wh = energy_requirement_wh
+        )
+    )
+
+    #benötigte Batteriekapazität in Ah bei 37 V
+    required_capacity_ah = (
+        battery_sizing.calculate_required_capacity_ah(
+            required_energy_wh = required_energy_wh
+        )
+    )
+
+    print("\n---------- Batterieauslegung ----------")
+    print(
+        f"Elektrischer Energiebedarf der Strecke: "
+        f"{energy_requirement_wh:.2f} Wh"
+    )
+    print(
+        f"Gewählte Reserve: "
+        f"{battery_sizing.reserve_factor * 100:.0f} %"
+    )
+    print(
+        f"Benötigte Batterieenergie inklusive Reserve: "
+        f"{required_energy_wh:.2f} Wh"
+    )
+    print(
+        f"Benötigte Batteriekapazität bei "
+        f"{battery_sizing.nominal_voltage_v:.1f} V: "
+        f"{required_capacity_ah:.2f} Ah"
+    )
+
+    battery_lipo = BatteryLiPo(capacity_nom_Ah = required_capacity_ah, 
+                               initial_soc = 1.0) #  100% voll
+    
+    battery_nmc = BatteryNMC(capacity_nom_Ah = required_capacity_ah, 
+                             initial_soc = 1.0) #  100% voll
+    
     #--------------------------------------------------------------------------------    
     #Simulation für LiPo
     #--------------------------------------------------------------------------------
@@ -212,7 +248,7 @@ def main():
 
     #Simulator starten
     simulator_lipo = EBikeSimulator(e_bike = my_bike, battery = battery_lipo, e_motor = my_motor)
-    simulator_lipo.simulate(torque_profile = motor_torque_profile, duration_profile = duration_profile)
+    simulator_lipo.simulate(motor_power_profile = motor_power_profile, duration_profile = duration_profile)
     
     # Lipo ergebnisse für Plot speichern
     # Strom war in der schleife, also [0.0] davor. Voltage und SoC haben den schon den richtigen startwert.
@@ -233,7 +269,7 @@ def main():
     my_battery = battery_nmc
     #Simulator starten
     simulator_nmc = EBikeSimulator(e_bike = my_bike, battery = battery_nmc, e_motor = my_motor)
-    simulator_nmc.simulate(torque_profile = motor_torque_profile, duration_profile = duration_profile)
+    simulator_nmc.simulate(motor_power_profile = motor_power_profile, duration_profile = duration_profile)
 
     # NMC ergebnisse für Plot speichern
     # Strom war in der schleife, also [0.0] davor. Voltage und SoC haben den schon den richtigen startwert.

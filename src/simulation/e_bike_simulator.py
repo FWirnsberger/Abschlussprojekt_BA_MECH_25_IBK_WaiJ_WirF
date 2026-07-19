@@ -17,10 +17,17 @@ class EBikeSimulator:
         self.ampere_profile = []
         self.soc_profile = []
 
-    def simulate(self, torque_profile: list[float], duration_profile: list[float]) -> None:
+    def simulate(self, motor_power_profile: list[float], duration_profile: list[float]) -> None:
         """
         Simuliert den Ladezustand der Batterie über bestimmte Zeitabschnitte.
         """
+        #Fehlererkennung
+        if len(motor_power_profile) != len(duration_profile):
+            raise ValueError(
+            "Motorleistungsprofil und Zeitprofil "
+            "müssen gleich lang sein."
+        )
+    
         logging.info("Starte Simulation der Route...")
         # Listen leeren, falls die Simulation mehrmals gestartet wird
         self.voltage_profile = []
@@ -35,11 +42,14 @@ class EBikeSimulator:
         empty_warning_printed = False
         full_warning_printed = False
     
-        #iterieren über das Drehmoment (t)
-        for t, d in zip(torque_profile, duration_profile):   
+        #aktuelle Batteriespannung aus SoC kennlinie
+        voltage = self.battery.voltage()
 
-            #Strom basierend auf dem Drehmoment abfragen
-            i = self.e_motor.get_current(torque=t) 
+        #iterieren über die Motorleistung und Zeitdauer
+        for motor_power, duration in zip(motor_power_profile, duration_profile):   
+
+            #Batteriestrom aus der Motorleistung abfragen
+            i = self.e_motor.get_current_draw(power = motor_power, voltage = voltage) 
 
             # Sicherheitsabfrage ob Akku leer
             if self.battery.is_empty() and i > 0:
@@ -59,11 +69,11 @@ class EBikeSimulator:
 
             # dem Akku mitteilen, wieviel und wie lange wir Strom gezogen haben, 
             # damit neuer SoC berechnet werden kann
-            self.battery.apply_current(current=i, duration=d)
+            self.battery.apply_current(current=i, duration=duration)
 
             # neuen SoC abfragen und in den Verlauf eintragen
             v = self.battery.voltage(current=i)
             self.voltage_profile.append(v)
             self.soc_profile.append(self.battery.soc)
 
-    logging.info("Simulation erfolgreich durchgeführt.")
+        logging.info("Simulation erfolgreich durchgeführt.")
