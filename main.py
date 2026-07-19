@@ -85,13 +85,7 @@ def main():
 
     my_motor = Motor(motor_constant = 1.5, 
                      efficiency = 0.85) # 85% Wirkungsgrad
-    
-    battery_lipo = BatteryLiPo(capacity_nom_Ah = required_capacity_ah, 
-                               initial_soc = 1.0) #  100% voll
-    
-    battery_nmc = BatteryNMC(capacity_nom_Ah = required_capacity_ah, 
-                             initial_soc = 1.0) #  100% voll
-    
+      
     physics = EBikePhysics(ebike = my_bike)
 
     #Listen für den Simulator vorbereiten
@@ -238,6 +232,13 @@ def main():
         f"{battery_sizing.nominal_voltage_v:.1f} V: "
         f"{required_capacity_ah:.2f} Ah"
     )
+
+    battery_lipo = BatteryLiPo(capacity_nom_Ah = required_capacity_ah, 
+                               initial_soc = 1.0) #  100% voll
+    
+    battery_nmc = BatteryNMC(capacity_nom_Ah = required_capacity_ah, 
+                             initial_soc = 1.0) #  100% voll
+    
     #--------------------------------------------------------------------------------    
     #Simulation für LiPo
     #--------------------------------------------------------------------------------

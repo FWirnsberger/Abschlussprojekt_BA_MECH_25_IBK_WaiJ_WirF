@@ -49,7 +49,7 @@ class EBikeSimulator:
         for motor_power, duration in zip(motor_power_profile, duration_profile):   
 
             #Batteriestrom aus der Motorleistung abfragen
-            i = self.e_motor.get_current_draw(power = motor_power_profile, voltage = voltage) 
+            i = self.e_motor.get_current_draw(power = motor_power, voltage = voltage) 
 
             # Sicherheitsabfrage ob Akku leer
             if self.battery.is_empty() and i > 0:
