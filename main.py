@@ -247,7 +247,7 @@ def main():
 
     #Simulator starten
     simulator_lipo = EBikeSimulator(e_bike = my_bike, battery = battery_lipo, e_motor = my_motor)
-    simulator_lipo.simulate(torque_profile = motor_torque_profile, duration_profile = duration_profile)
+    simulator_lipo.simulate(motor_power_profile = motor_power_profile, duration_profile = duration_profile)
     
     # Lipo ergebnisse für Plot speichern
     # Strom war in der schleife, also [0.0] davor. Voltage und SoC haben den schon den richtigen startwert.
@@ -268,7 +268,7 @@ def main():
     my_battery = battery_nmc
     #Simulator starten
     simulator_nmc = EBikeSimulator(e_bike = my_bike, battery = battery_nmc, e_motor = my_motor)
-    simulator_nmc.simulate(torque_profile = motor_torque_profile, duration_profile = duration_profile)
+    simulator_nmc.simulate(motor_power_profile = motor_power_profile, duration_profile = duration_profile)
 
     # NMC ergebnisse für Plot speichern
     # Strom war in der schleife, also [0.0] davor. Voltage und SoC haben den schon den richtigen startwert.
