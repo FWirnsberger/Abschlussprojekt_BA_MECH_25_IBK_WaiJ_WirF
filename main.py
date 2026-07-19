@@ -291,7 +291,14 @@ def main():
     #Hier werden die Plots und der Bericht erstellt
     #---------------------------------------------------------------
     plot_generator = PlotGenerator(data = route.data, output_folder = "output/figures")
-    speed_plod_path = plot_generator.create_speed_plot()
+    speed_plot_path = plot_generator.create_speed_plot()
+    acceleration_plot_path = plot_generator.create_acceleration_plot()
+    power_plot_path = plot_generator.create_power_plot()
+    motor_torque_plot_path = plot_generator.create_motor_torque_plot()
+    motor_current_plot_path = plot_generator.create_motor_current_plot()
+    soc_plot_path = plot_generator.create_soc_plot()
+    voltage_plot_path = plot_generator.create_voltage_plot()
+    elevation_plot_path = plot_generator.create_elevation_plot()
     
     report_generator = ReportGenerator(         #es wird ein neues Bericht Objekt erstellt und der Ausgabeordner und Titel festgelegt
         output_directory = "output/report", 
@@ -300,9 +307,60 @@ def main():
 
     #----------------Grafiken hinzufügen--------------------
     report_generator.add_figure(                #die erstellte Geschwindigkeitsgrafik wird hinzugefügt
-        image_path=speed_plod_path,
+        image_path=speed_plot_path,
         caption="Geschwindigkeitsverlauf während der gesamten Fahrt.",
         label="fig:speed-profile"
+    )
+        # Beschleunigungsverlauf
+    report_generator.add_figure(
+        image_path=acceleration_plot_path,
+        caption="Beschleunigungsverlauf während der gesamten Fahrt.",
+        label="fig:acceleration-profile"
+    )
+
+    # Leistungsverlauf
+    report_generator.add_figure(
+        image_path=power_plot_path,
+        caption=(
+            "Verlauf der mechanischen Gesamtleistung sowie der "
+            "Fahrer- und Motorleistung."
+        ),
+        label="fig:power-profile"
+    )
+
+    # Motordrehmoment
+    report_generator.add_figure(
+        image_path=motor_torque_plot_path,
+        caption="Verlauf des vom Motor erzeugten Drehmoments.",
+        label="fig:motor-torque-profile"
+    )
+
+    # Motorstrom
+    report_generator.add_figure(
+        image_path=motor_current_plot_path,
+        caption="Verlauf des aus dem Motordrehmoment berechneten Motorstroms.",
+        label="fig:motor-current-profile"
+    )
+
+    # Ladezustand
+    report_generator.add_figure(
+        image_path=soc_plot_path,
+        caption="Vergleich des Ladezustands von LiPo- und NMC-Batterie.",
+        label="fig:soc-profile"
+    )
+
+    # Batteriespannung
+    report_generator.add_figure(
+        image_path=voltage_plot_path,
+        caption="Vergleich der Spannungsverläufe von LiPo- und NMC-Batterie.",
+        label="fig:voltage-profile"
+    )
+
+    # Höhenprofil
+    report_generator.add_figure(
+        image_path=elevation_plot_path,
+        caption="Höhenprofil entlang der zurückgelegten Strecke.",
+        label="fig:elevation-profile"
     )
 
     #----------------Kennwerte für die ZUsammenfassung hinzufügen--------------------
