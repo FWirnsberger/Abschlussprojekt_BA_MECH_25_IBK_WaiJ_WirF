@@ -64,7 +64,10 @@ class Motor:
         # Wenn keine Leistung benötigt wird
         if power <= 0.0:
             return 0.0
-
+        #gegen 0 Division absichern
+        if voltage <= 0.0:
+            raise ValueError("Die Batteriespannung muss größer 0 V sein.")
+    
         # Elektrische Leistung berechnen (P_el = P_mech / eta)
         electric_power = power / self.efficiency
 
