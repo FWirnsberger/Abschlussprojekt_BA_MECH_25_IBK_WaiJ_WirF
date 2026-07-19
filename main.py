@@ -57,7 +57,7 @@ def main():
     hours = int(total_time_s // 3600)     #// ganz Zahlige Division; % gibt den Rest aus
     minutes = int((total_time_s % 3600) // 60)
     seconds = int(total_time_s % 60)
-
+    formated_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     #Durchschnittsgeschwindigkeit berechnen
     average_speed_m_s= route.calculate_average_speed(total_distance_m, total_time_s)
     average_speed_km_h = average_speed_m_s * 3.6
@@ -68,7 +68,7 @@ def main():
     #Ausgabe der statischen Werte
     print("\n----------Daten über die Fahrt:----------")
     print(f"Zurückgelegte Strecke: {total_distance_km:.2f} km")
-    print(f"Benötigte Zeit: {hours:02d}h {minutes:02d} min {seconds:02d} s")
+    print(f"Benötigte Zeit: {formated_time}")
     print(f"Durchschnittsgeschwindigkeit: {average_speed_km_h:.2f} km/h")
     print(f"Anstieg: {total_ascent:.2f} m")
     print(f"Abstieg: {total_descent:.2f} m")
@@ -298,11 +298,29 @@ def main():
         title = "Auswertung der Fahrradsimulation"
     )
 
+    #----------------Grafiken hinzufügen--------------------
     report_generator.add_figure(                #die erstellte Geschwindigkeitsgrafik wird hinzugefügt
         image_path=speed_plod_path,
         caption="Geschwindigkeitsverlauf während der gesamten Fahrt.",
         label="fig:speed-profile"
     )
+
+    #----------------Kennwerte für die ZUsammenfassung hinzufügen--------------------
+    report_generator.add_summary_value("Gesamtstrecke", f"{total_distance_km:.2f} km")    
+    report_generator.add_summary_value("Fahrzeit", formated_time)
+    report_generator.add_summary_value("Durchschnittsgeschwindigkeit", f"{average_speed_km_h:.2f} km/h")
+    report_generator.add_summary_value("Anstieg", f"{total_ascent:.1f} m")
+    report_generator.add_summary_value("Abstieg", f"{total_descent:.1f} m")
+    report_generator.add_summary_value("Maximale Gesamtleistung", f"{max_total_power_w:.1f} W")
+    report_generator.add_summary_value("Maximale Motorleistung", f"{max_motor_power_w:.1f} W")
+    report_generator.add_summary_value("Elektrischer Energiebedarf", f"{energy_requirement_wh:.1f} Wh")
+    report_generator.add_summary_value("Batterieenergie inkl. Reserve", f"{required_energy_wh:.1f} Wh")
+    report_generator.add_summary_value("Erforderliche Batteriekapazität", f"{required_capacity_ah:.2f} Ah")
+    report_generator.add_summary_value("LiPo End-SoC", f"{battery_lipo.soc * 100:.1f} \\%")
+    report_generator.add_summary_value("LiPo Endspannung", f"{battery_lipo.voltage():.2f} V")
+    report_generator.add_summary_value("NMC End-SoC", f"{battery_nmc.soc * 100:.1f} \\%")
+    report_generator.add_summary_value("NMC Endspannung",f"{battery_nmc.voltage():.2f} V")
+    
 
     tex_path = report_generator.create_tex_file()
     pdf_path = report_generator.export_pdf(tex_path)
