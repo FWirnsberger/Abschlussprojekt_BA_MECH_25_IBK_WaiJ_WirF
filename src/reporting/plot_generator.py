@@ -4,6 +4,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import numpy as np
+from matplotlib.collections import LineCollection   #zum Höhenprofil einfärben
 
 class PlotGenerator:
     """
@@ -382,10 +384,34 @@ class PlotGenerator:
 
         plt.figure(figsize=(12, 6))
 
-        plt.plot(
-            distance_km,
-            self.data["ele"]
-        )
+        #x und y Werte im Diagramm aufteilen
+        x = distance_km.to_numpy()
+        y = self.data["ele"].to_numpy()
+
+        #Steigung von verhältnis in Prozent umrechnen
+        slope = self.data["slope"].to_numpy() * 100
+
+        #Liniensegmente zum einfärben erzeugen
+        points = np.array([x,y]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+        line = LineCollection(segments, cmap="RdYlBu_r", linewidth = 2)    #blau gelb roter verlauf
+        
+        line.set_array(slope[:-1])      #Farbe abhängig von der Steigung
+
+        #Farbskala anpassen
+        line.set_clim(-6, 6)
+        
+        ax = plt.gca()
+        ax.add_collection(line)
+
+        ax.set_xlim(x.min(), x.max())
+        ax.set_ylim(y.min() - 5, y.max() + 5)
+
+        #Farbskala angeben
+        cbar = plt.colorbar(line)
+        cbar.set_label("Steigung [%]")
+
 
         plt.margins(x=0)
         plt.title("Höhenprofil der Strecke")
