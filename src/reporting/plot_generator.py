@@ -426,3 +426,47 @@ class PlotGenerator:
         logging.info(f"Höhenprofil erstellt: {figure_path}")
 
         return figure_path
+
+    def create_air_density_plot(self) -> Path:
+        """
+        Hier wird die Grafik für die Luftdichte erstellt, über die Strecke.
+        """
+
+        required_columns = [
+            "distance_m",
+            "air_density_kg_m3",
+        ]
+
+        for column in required_columns:
+            if column not in self.data.columns:
+                raise ValueError(f"Die Spalte {column} fehlt.")
+
+        # Kumulierte Strecke berechnen und in Kilometer umrechnen
+        distance_km = self.data["distance_m"].cumsum() / 1000
+
+        air_density = self.data["air_density_kg_m3"]
+
+        figure_path = self.output_folder / "Luftdichteprofil.png"
+
+        plt.figure(figsize=(12, 6))
+
+        plt.plot(
+            distance_km,
+            air_density,
+            label="Luftdichte",
+        )
+
+        plt.margins(x=0)
+        plt.title("Luftdichte entlang der Strecke")
+        plt.xlabel("Zurückgelegte Strecke [km]")
+        plt.ylabel("Luftdichte [kg/m³]")
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+
+        plt.savefig(figure_path, dpi=300)
+        plt.close()
+
+        logging.info(f"Luftdichteprofil erstellt: {figure_path}")
+
+        return figure_path

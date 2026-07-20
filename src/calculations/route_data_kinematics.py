@@ -315,6 +315,46 @@ class RouteData:
         logging.info("Höhenmeter wurden berechnet.")
             
         return total_ascent, total_descent
+    
+    def calculate_air_density(self)-> None:
+        """
+        Hier wird die Luftdichte für jeden GPS-Punkt anhand der Höhe und der Umgebungstemperatur gemessen.
+        """
+
+        #Fehlererkennung
+        if self.data is None:
+            raise ValueError("Es wurden noch keine Routendaten geladen!")
+        
+        required_columns = ["ele", "temperature",]
+
+        for column in required_columns:
+            if column not in self.data.columns:
+                raise ValueError(f"Die Spalte {column} fehlt!")
+            
+            #Konstanten aus dem Internet
+            sea_level_pressure_pa = 101325.0
+            standard_temperature_k = 288.15
+            temperature_gradient_k_m = 0.0065
+            gravitational_acceleration_m_s2 = 9.80665
+            molar_mass_air_kg_mol = 0.0289644
+            universal_gas_constant = 8.3144598
+            specific_gas_constant_air = 287.05
+
+            altitude_m = self.data["ele"]
+            temperature_c = pd.to_numeric(self.data["temperature"], errors="coerce")
+            temperature_k = temperature_c + 273.15
+
+            #Luftdruck berechnen
+            pressure_pa = sea_level_pressure_pa * (1.0 - (temperature_gradient_k_m * altitude_m / standard_temperature_k)) ** (gravitational_acceleration_m_s2 * molar_mass_air_kg_mol / (universal_gas_constant * temperature_gradient_k_m))
+
+            #ideale Gasgleichung aus Thermo
+            air_density = pressure_pa / (specific_gas_constant_air * temperature_k)
+
+            self.data["air_density_kg_m3"] = air_density
+
+            logging.info("Luftdichte wurde aus Höhe udn Temperatur erfolgreich berechnet.")
+
+
 
     def get_data(self) -> pd.DataFrame:
         """Gibt das berechnete DataFrame zurück. (Datenkapselung)"""

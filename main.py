@@ -36,7 +36,13 @@ def main():
     route.filter_speed(window_size=5)       #Geschwindigkeit mit Fenstergröße 5 filtern
     route.calculate_acceleration(max_acceleration_m_s2=1.0) #Beschleunigung aus der gefilterten Geschwindigkeit berechnen und auf ±3.5 m/s² begrenzen
 
-    
+    #Liuftdichte berechnen
+    route.calculate_air_density()
+    #für Zusammenfassung
+    average_air_density = route.data["air_density_kg_m3"].mean()
+    minimum_air_density = route.data["air_density_kg_m3"].min()
+    maximum_air_density = route.data["air_density_kg_m3"].max()
+
     # Test ob Daten richtig sind
     print(route.data[['time', 'distance_m', 'speed_raw_m_s', 'speed_m_s', 'acceleration_raw_m_s2', 'acceleration_m_s2', 'slope']].head(10))
     
@@ -299,6 +305,7 @@ def main():
     soc_plot_path = plot_generator.create_soc_plot()
     voltage_plot_path = plot_generator.create_voltage_plot()
     elevation_plot_path = plot_generator.create_elevation_plot()
+    air_density_plot_path = plot_generator.create_air_density_plot()
     
     report_generator = ReportGenerator(         #es wird ein neues Bericht Objekt erstellt und der Ausgabeordner und Titel festgelegt
         output_directory = "output/report", 
@@ -363,6 +370,13 @@ def main():
         label="fig:elevation-profile"
     )
 
+    #Luftdichte
+    report_generator.add_figure(
+        image_path=air_density_plot_path,
+        caption=("Berechneter Verlauf der Luftdichte entlang der Strecke in Abhängigkeit von Höhe und Umgebungstemperatur."),
+        label="fig:air-density-profile"
+    )
+
     #----------------Kennwerte für die ZUsammenfassung hinzufügen--------------------
     report_generator.add_summary_value("Gesamtstrecke", f"{total_distance_km:.2f} km")    
     report_generator.add_summary_value("Fahrzeit", formated_time)
@@ -378,6 +392,9 @@ def main():
     report_generator.add_summary_value("LiPo Endspannung", f"{battery_lipo.voltage():.2f} V")
     report_generator.add_summary_value("NMC End-SoC", f"{battery_nmc.soc * 100:.1f} \\%")
     report_generator.add_summary_value("NMC Endspannung",f"{battery_nmc.voltage():.2f} V")
+    report_generator.add_summary_value("Durchschnittliche Luftdichte", f"{average_air_density:.3f} kg/m³")
+    report_generator.add_summary_value("Minimale Luftdichte", f"{minimum_air_density:.3f} kg/m³")
+    report_generator.add_summary_value("Maximale Luftdichte", f"{maximum_air_density:.3f} kg/m³")
     
 
     tex_path = report_generator.create_tex_file()
