@@ -17,7 +17,8 @@ class EBikePhysics:
     def calculate_power(self, 
                         speed: float, 
                         acceleration: float, 
-                        slope: float) -> float:
+                        slope: float,
+                        air_density: float | None = None) -> float:
         """
         Berechnet die benötigte mechanische Leistung (P = F * v) [W]
 
@@ -27,8 +28,17 @@ class EBikePhysics:
             acceleration:
                 Beschleunigung in m/s2
             slope:
-            Steigung als Verhältnis (z.B: 0.05 = 5 % Steigung)
+                Steigung als Verhältnis (z.B: 0.05 = 5 % Steigung)
+            air_density:
+                die berechnete Luftdichte, falls eine berechnet wurde
         """
+        #schauen ob die berechnete oder fix angenommene Luftdichte verwendet werden muss
+        if air_density is None:
+            air_density = self.rho
+
+        #Fehlererkennugn
+        if air_density <= 0:
+            raise ValueError("Die Luftdichte muss größer als 0 kg/m³ sein.")
 
         # Gesamtmasse abrufen
         mass = self.ebike.get_total_mass()
@@ -40,7 +50,7 @@ class EBikePhysics:
         slope_force = mass * self.g * slope
         
         # luftwiderstand (F = 0.5 * rho * cw_a * v^2)
-        drag_force = 0.5 * self.rho * self.ebike.cw_a * (speed ** 2)
+        drag_force = 0.5 * air_density * self.ebike.cw_a * (speed ** 2)
         
         #Gesamtkraft
         total_force = acceleration_force + slope_force + drag_force
