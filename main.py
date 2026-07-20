@@ -57,9 +57,6 @@ def main():
     #benötigte Zeit berechnen
     total_time_s = route.calculate_total_time()
 
-    total_time_min = total_time_s / 60
-    total_time_h = total_time_s / 3600
-
     hours = int(total_time_s // 3600)     #// ganz Zahlige Division; % gibt den Rest aus
     minutes = int((total_time_s % 3600) // 60)
     seconds = int(total_time_s % 60)
@@ -116,6 +113,7 @@ def main():
         acceleration = route.data.loc[i, 'acceleration_m_s2']
         slope = route.data.loc[i, 'slope']
         dt = route.data.loc[i, 'delta_time_s']
+        air_density = route.data.loc[i, "air_density_kg_m3"]
         duration_profile.append(dt)
         
         
@@ -123,7 +121,8 @@ def main():
         total_power = physics.calculate_power(
             speed=speed,
             acceleration=acceleration,
-            slope=slope
+            slope=slope,
+            air_density=air_density
         )
 
         #2. Schritt: Leistung auf Fahrer und Motor aufteilen
