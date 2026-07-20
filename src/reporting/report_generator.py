@@ -14,7 +14,13 @@ class ReportGenerator:
         self.output_directory.mkdir(parents= True, exist_ok= True)  # Ordner für Bericht wird erstellt, falls noch nicht vorhanden
         self.title = title
         self.figures: list[dict[str, str]] = []     #Infos der Grafiken (Name, Pfad) werden hier gespeichert
+        self.summary: dict[str, str] = {}           #speicher Zahlenwerte der Berechnungen
 
+    def add_summary_value(self, name: str, value: str)-> None:
+        """
+        Hier werden interessante Kennzahlen für den Bericht hinzugefügr.
+        """
+        self.summary[name] = value
 
     def add_figure(self, image_path: Path, caption: str, label: str) -> None:
         """
@@ -94,6 +100,11 @@ class ReportGenerator:
         """
         Hier wird der Latex Code zum kompilieren erstellt, als String
         """
+        summary_table = ""
+        
+        for key, value in self.summary.items():
+            summary_table += f"{key} & {value} \\\\\n"
+
         figure_code = ""        # ein leere String, hier wird später der gesamte Latex Code der Grafiken gespeichert
 
         for figure in self.figures:     #jede Grafik der Liste self.figures wird iteriert
@@ -138,6 +149,28 @@ class ReportGenerator:
 
 \tableofcontents
 \clearpage
+
+\section{{Zusammenfassung}}
+
+Während der Simulation wurde die benötigte Motorleistung entlang der gesamten Route berechnet. Daraus wurde 
+dann der Energiebedarf, die erforderliche Batteriekapazität (inkl. Reserve) berechnet.
+Zudem wurde der Verlauf der Batteriespannung und des Ladezustandes für beide Batterietypen bestimmt.
+
+Die wichtigsten Ergebnisse sind in Tabelle \ref{{tab:summary}}
+zusammengefasst.
+
+\begin{{table}}[H]
+\centering
+\begin{{tabular}}{{ll}}
+\hline
+Größe & Wert\\
+\hline
+{summary_table}
+\hline
+\end{{tabular}}
+\caption{{Zusammenfassung der Simulation}}
+\label{{tab:summary}}
+\end{{table}}
 
 \section{{Grafische Auswertung}}
 

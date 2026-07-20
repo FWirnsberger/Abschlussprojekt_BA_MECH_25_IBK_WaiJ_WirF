@@ -57,7 +57,7 @@ def main():
     hours = int(total_time_s // 3600)     #// ganz Zahlige Division; % gibt den Rest aus
     minutes = int((total_time_s % 3600) // 60)
     seconds = int(total_time_s % 60)
-
+    formated_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     #Durchschnittsgeschwindigkeit berechnen
     average_speed_m_s= route.calculate_average_speed(total_distance_m, total_time_s)
     average_speed_km_h = average_speed_m_s * 3.6
@@ -68,7 +68,7 @@ def main():
     #Ausgabe der statischen Werte
     print("\n----------Daten über die Fahrt:----------")
     print(f"Zurückgelegte Strecke: {total_distance_km:.2f} km")
-    print(f"Benötigte Zeit: {hours:02d}h {minutes:02d} min {seconds:02d} s")
+    print(f"Benötigte Zeit: {formated_time}")
     print(f"Durchschnittsgeschwindigkeit: {average_speed_km_h:.2f} km/h")
     print(f"Anstieg: {total_ascent:.2f} m")
     print(f"Abstieg: {total_descent:.2f} m")
@@ -291,18 +291,94 @@ def main():
     #Hier werden die Plots und der Bericht erstellt
     #---------------------------------------------------------------
     plot_generator = PlotGenerator(data = route.data, output_folder = "output/figures")
-    speed_plod_path = plot_generator.create_speed_plot()
+    speed_plot_path = plot_generator.create_speed_plot()
+    acceleration_plot_path = plot_generator.create_acceleration_plot()
+    power_plot_path = plot_generator.create_power_plot()
+    motor_torque_plot_path = plot_generator.create_motor_torque_plot()
+    motor_current_plot_path = plot_generator.create_motor_current_plot()
+    soc_plot_path = plot_generator.create_soc_plot()
+    voltage_plot_path = plot_generator.create_voltage_plot()
+    elevation_plot_path = plot_generator.create_elevation_plot()
     
     report_generator = ReportGenerator(         #es wird ein neues Bericht Objekt erstellt und der Ausgabeordner und Titel festgelegt
         output_directory = "output/report", 
         title = "Auswertung der Fahrradsimulation"
     )
 
+    #----------------Grafiken hinzufügen--------------------
     report_generator.add_figure(                #die erstellte Geschwindigkeitsgrafik wird hinzugefügt
-        image_path=speed_plod_path,
+        image_path=speed_plot_path,
         caption="Geschwindigkeitsverlauf während der gesamten Fahrt.",
         label="fig:speed-profile"
     )
+        # Beschleunigungsverlauf
+    report_generator.add_figure(
+        image_path=acceleration_plot_path,
+        caption="Beschleunigungsverlauf während der gesamten Fahrt.",
+        label="fig:acceleration-profile"
+    )
+
+    # Leistungsverlauf
+    report_generator.add_figure(
+        image_path=power_plot_path,
+        caption=(
+            "Verlauf der mechanischen Gesamtleistung sowie der "
+            "Fahrer- und Motorleistung."
+        ),
+        label="fig:power-profile"
+    )
+
+    # Motordrehmoment
+    report_generator.add_figure(
+        image_path=motor_torque_plot_path,
+        caption="Verlauf des vom Motor erzeugten Drehmoments.",
+        label="fig:motor-torque-profile"
+    )
+
+    # Motorstrom
+    report_generator.add_figure(
+        image_path=motor_current_plot_path,
+        caption="Verlauf des aus dem Motordrehmoment berechneten Motorstroms.",
+        label="fig:motor-current-profile"
+    )
+
+    # Ladezustand
+    report_generator.add_figure(
+        image_path=soc_plot_path,
+        caption="Vergleich des Ladezustands von LiPo- und NMC-Batterie.",
+        label="fig:soc-profile"
+    )
+
+    # Batteriespannung
+    report_generator.add_figure(
+        image_path=voltage_plot_path,
+        caption="Vergleich der Spannungsverläufe von LiPo- und NMC-Batterie.",
+        label="fig:voltage-profile"
+    )
+
+    # Höhenprofil
+    report_generator.add_figure(
+        image_path=elevation_plot_path,
+        caption="Höhenprofil entlang der zurückgelegten Strecke.",
+        label="fig:elevation-profile"
+    )
+
+    #----------------Kennwerte für die ZUsammenfassung hinzufügen--------------------
+    report_generator.add_summary_value("Gesamtstrecke", f"{total_distance_km:.2f} km")    
+    report_generator.add_summary_value("Fahrzeit", formated_time)
+    report_generator.add_summary_value("Durchschnittsgeschwindigkeit", f"{average_speed_km_h:.2f} km/h")
+    report_generator.add_summary_value("Anstieg", f"{total_ascent:.1f} m")
+    report_generator.add_summary_value("Abstieg", f"{total_descent:.1f} m")
+    report_generator.add_summary_value("Maximale Gesamtleistung", f"{max_total_power_w:.1f} W")
+    report_generator.add_summary_value("Maximale Motorleistung", f"{max_motor_power_w:.1f} W")
+    report_generator.add_summary_value("Elektrischer Energiebedarf", f"{energy_requirement_wh:.1f} Wh")
+    report_generator.add_summary_value("Batterieenergie inkl. Reserve", f"{required_energy_wh:.1f} Wh")
+    report_generator.add_summary_value("Erforderliche Batteriekapazität", f"{required_capacity_ah:.2f} Ah")
+    report_generator.add_summary_value("LiPo End-SoC", f"{battery_lipo.soc * 100:.1f} \\%")
+    report_generator.add_summary_value("LiPo Endspannung", f"{battery_lipo.voltage():.2f} V")
+    report_generator.add_summary_value("NMC End-SoC", f"{battery_nmc.soc * 100:.1f} \\%")
+    report_generator.add_summary_value("NMC Endspannung",f"{battery_nmc.voltage():.2f} V")
+    
 
     tex_path = report_generator.create_tex_file()
     pdf_path = report_generator.export_pdf(tex_path)
