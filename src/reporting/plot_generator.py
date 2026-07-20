@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from matplotlib.collections import LineCollection   #zum Höhenprofil einfärben
 
+import folium # für kartenerstellung
+
 class PlotGenerator:
     """
     hier werden die Grafiken aus den berechneten Werten erstellt
@@ -470,3 +472,74 @@ class PlotGenerator:
         logging.info(f"Luftdichteprofil erstellt: {figure_path}")
 
         return figure_path
+    
+    def create_route_map(self)->Path:
+        """
+        Hier wird die Strecke auf einer Karte geplottet. mit folium
+        """
+
+        required_columns = ["lat", "lon"]
+
+        for column in required_columns:
+            if column not in self.data.columns:
+                raise ValueError(f"Die Spalte {column} fehlt!")
+            
+        figure_path = self.output_folder / "Route.html" #hier wird der html link gespeichert
+
+        #Mittelountt bestimmen --> so ist die Karte beim öffnen zentriert
+        center_lat = self.data["lat"].mean()
+        center_lon = self.data["lon"].mean()
+
+        #Karte erzeugen
+        m = folium.Map(location=[center_lat, center_lon], zoom_start=14)
+
+        #GPS Punkte vorbereiten
+        coordinates = list(zip(self.data["lat"], self.data["lon"]))
+
+        #Strecke zeichnen
+        folium.PolyLine(coordinates, color="blue", weight=5, opacity=0.9).add_to(m)
+                                                #  Dicke der Linie; Transparenz der Linie (1 sichtbar, 0 unsichtbar); fügt die Linie zur Karte hinzu
+        
+        marker_interval = 1
+
+        for i in range(0, len(self.data), marker_interval):
+
+            lat = self.data.loc[i, "lat"]
+            lon = self.data.loc[i, "lon"]
+
+            speed = self.data.loc[i, "speed_m_s"] * 3.6
+
+            orientation = self.data.loc[i, "orientation"]
+            bearing = self.data.loc[i, "orientation_degrees"]
+
+            tooltip_text = (
+                f"Geschwindigkeit: {speed:.1f} km/h<br>"
+                f"Orientierung: {orientation}<br>"
+                f"Richtungswinkel: {bearing:.1f}°"
+            )
+
+            folium.CircleMarker(
+                location=[lat, lon],
+                radius=3,
+                color="red",
+                fill=True,
+                fill_opacity=0.8,
+                tooltip=folium.Tooltip(
+                    tooltip_text,
+                    sticky=True
+                )
+            ).add_to(m)
+
+        #Start
+        folium.Marker(coordinates[0], tooltip="Start", icon=folium.Icon(color="green")).add_to(m)
+
+        #Ziel
+        folium.Marker(coordinates[-1], tooltip="Ziel", icon=folium.Icon(color="red")).add_to(m)
+
+        m.save(figure_path)
+
+        return figure_path
+
+
+
+        

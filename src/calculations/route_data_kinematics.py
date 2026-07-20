@@ -1,6 +1,7 @@
 import pandas as pd
 import logging
 from src.models.gps_point import GPSPoint
+import math
 
 class RouteData:
     """Klasse zum Einlesen und Verwalten der GPS-Routendaten."""
@@ -353,6 +354,87 @@ class RouteData:
             self.data["air_density_kg_m3"] = air_density
 
             logging.info("Luftdichte wurde aus Höhe udn Temperatur erfolgreich berechnet.")
+
+    def _bearing_to_orientation(self, bearing):
+        """
+        Wandelt einen Winkel (0–360°) in eine Himmelsrichtung um.
+        """
+
+        if 337.5 <= bearing or bearing < 22.5:
+            return "N"
+        elif 22.5 <= bearing < 67.5:
+            return "NO"
+        elif 67.5 <= bearing < 112.5:
+            return "O"
+        elif 112.5 <= bearing < 157.5:
+            return "SO"
+        elif 157.5 <= bearing < 202.5:
+            return "S"
+        elif 202.5 <= bearing < 247.5:
+            return "SW"
+        elif 247.5 <= bearing < 292.5:
+            return "W"
+        else:
+            return "NW"
+        
+        
+    def calculate_orientation(self)->None:
+        """
+        Hier wird die Fahrtrichtung zwischen zwei aufeinanderfolgenden GPS Punkten ermittelt.
+        Als Ergebnis werden Winkel in Grad und Himmelsrichtung im DataFrame gespeichert.
+        """
+        #Fehlererkennung
+        if self.data is None:
+            logging.error("Orientierung kann nicht berechnet werden: Keine Daten geladen.")
+            return
+
+        if len(self.data) < 2:
+            logging.error("Orientierung kann nicht berechnet werden: Zu wenige GPS-Punkte vorhanden.")
+            return
+
+        logging.info("Orientierung der GPS-Punkte wird berechnet.")
+
+        #Wichtig ist zu wissen, dass für den ersten Punkt noch keine Bewegungsrichtung ermittelt werden kann
+        orientation_degrees = [float("nan")]
+        orientations = ["Start"]
+
+        for i in range(1, len(self.data)):
+            #vorheriger GPS Puntk
+            lat1 = self.data.loc[i - 1, "lat"]
+            lon1 = self.data.loc[i - 1, "lon"]
+
+            #aktueller
+            lat2 = self.data.loc[i, "lat"]
+            lon2 = self.data.loc[i, "lon"]
+
+            #Grad in Rad umrechnen
+            lat1_rad = math.radians(lat1)
+            lat2_rad = math.radians(lat2)
+
+            delta_lon_rad = math.radians(lon2 - lon1)
+
+            #Peilwinkel
+            x = math.sin(delta_lon_rad) * math.cos(lat2_rad)
+
+            y = (math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(delta_lon_rad))
+
+            bearing = math.degrees(math.atan2(x, y))
+
+            # Winkel von 0 bis 360 ° normieren
+            bearing = (bearing + 360) % 360
+
+            orientation_degrees.append(bearing)
+            
+            #WInkel in Himmelsrichtung umwandeln
+            orientation = self._bearing_to_orientation(bearing)
+            orientations.append(orientation)
+
+        
+        # Ergebnisse im DataFrame speichern
+        self.data["orientation_degrees"] = orientation_degrees
+        self.data["orientation"] = orientations
+
+        logging.info("Orientierung erfolgreich berechnet.")
 
 
 

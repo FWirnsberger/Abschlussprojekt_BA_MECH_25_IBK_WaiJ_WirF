@@ -36,12 +36,15 @@ def main():
     route.filter_speed(window_size=5)       #Geschwindigkeit mit Fenstergröße 5 filtern
     route.calculate_acceleration(max_acceleration_m_s2=1.0) #Beschleunigung aus der gefilterten Geschwindigkeit berechnen und auf ±3.5 m/s² begrenzen
 
-    #Liuftdichte berechnen
+    #Luftdichte berechnen
     route.calculate_air_density()
     #für Zusammenfassung
     average_air_density = route.data["air_density_kg_m3"].mean()
     minimum_air_density = route.data["air_density_kg_m3"].min()
     maximum_air_density = route.data["air_density_kg_m3"].max()
+
+    #orientierung berechnen
+    route.calculate_orientation()
 
     # Test ob Daten richtig sind
     print(route.data[['time', 'distance_m', 'speed_raw_m_s', 'speed_m_s', 'acceleration_raw_m_s2', 'acceleration_m_s2', 'slope']].head(10))
@@ -305,6 +308,7 @@ def main():
     voltage_plot_path = plot_generator.create_voltage_plot()
     elevation_plot_path = plot_generator.create_elevation_plot()
     air_density_plot_path = plot_generator.create_air_density_plot()
+    route_map_path = plot_generator.create_route_map()
     
     report_generator = ReportGenerator(         #es wird ein neues Bericht Objekt erstellt und der Ausgabeordner und Titel festgelegt
         output_directory = "output/report", 
