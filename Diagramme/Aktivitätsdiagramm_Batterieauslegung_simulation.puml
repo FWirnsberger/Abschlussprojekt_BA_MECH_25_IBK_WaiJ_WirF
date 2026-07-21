@@ -1,0 +1,195 @@
+@startuml
+title Batterieauslegung und Batteriesimulation
+
+skinparam shadowing false
+skinparam activity {
+    BackgroundColor White
+    BorderColor Black
+    DiamondBackgroundColor White
+    DiamondBorderColor Black
+    ArrowColor Black
+}
+
+start
+
+partition "Batterieauslegung" {
+    :BatterySizing erstellen;
+    note right
+      Nennspannung = 37 V
+      Reservefaktor = 0,20
+    end note
+
+    if (Motorleistungsprofil und\nZeitprofil gleich lang?) then (ja)
+    else (nein)
+        :ValueError auslösen;
+        stop
+    endif
+
+    if (0 < Motorwirkungsgrad < 1?) then (ja)
+    else (nein)
+        :ValueError auslösen;
+        stop
+    endif
+
+    :Gesamtenergie = 0 Wh;
+
+    :Motorleistungsprofil und\nZeitprofil gemeinsam durchlaufen;
+
+    while (Weitere Leistungswerte vorhanden?) is (ja)
+
+        :Motorleistung und\nZeitdauer auslesen;
+
+        if (Zeitdauer <= 0 s?) then (ja)
+            :Aktuellen Abschnitt überspringen;
+        else (nein)
+            if (Motorleistung > 0 W?) then (ja)
+                :Mechanische Leistung = Motorleistung;
+            else (nein)
+                :Mechanische Leistung = 0 W;
+            endif
+
+            :Elektrische Leistung berechnen;\nP_el = P_mech / Wirkungsgrad;
+
+            :Abschnittsenergie berechnen;\nE = P_el · Dauer / 3600;
+
+            :Abschnittsenergie zur\nGesamtenergie addieren;
+        endif
+
+    endwhile (nein)
+
+    :Energiebedarf ohne Reserve speichern;
+
+    :Benötigte Energie berechnen;\nE_required = E · (1 + 0,20);
+
+    :Benötigte Kapazität berechnen;\nC_Ah = E_required / 37 V;
+}
+
+partition "Batterien erstellen" {
+    :LiPo-Batterie erstellen;
+    note right
+      Anfangs-SoC: 100 %
+      Innenwiderstand: 80 mOhm
+      Spannung über LiPo-OCV-Kennlinie
+    end note
+
+    :NMC-Batterie erstellen;
+    note right
+      Anfangs-SoC: 100 %
+      Innenwiderstand: 70 mOhm
+      Spannung über NMC-OCV-Kennlinie
+    end note
+}
+
+partition "Batterietyp auswählen" {
+    :Aktuellen Batterietyp auswählen;
+
+    repeat
+        if (Erster Durchlauf?) then (ja)
+            :LiPo-Batterie verwenden;
+        else (nein)
+            :NMC-Batterie verwenden;
+        endif
+
+        :EBikeSimulator mit E-Bike,\nMotor und Batterie erstellen;
+
+        partition "Simulation initialisieren" {
+            if (Motorleistungsprofil und\nZeitprofil gleich lang?) then (ja)
+            else (nein)
+                :ValueError auslösen;
+                stop
+            endif
+
+            :Spannungsprofil leeren;
+            :Stromprofil leeren;
+            :SoC-Profil leeren;
+
+            :Leerlaufspannung bei t = 0 berechnen;
+            :Anfangsspannung speichern;
+            :Anfangs-SoC speichern;
+
+            :Warnmerker für leere\nBatterie auf false setzen;
+            :Warnmerker für volle\nBatterie auf false setzen;
+
+            :Spannung aus aktueller\nSoC-Kennlinie bestimmen;
+        }
+
+        partition "Zeitliche Batteriesimulation" {
+            :Motorleistungsprofil und\nZeitprofil gemeinsam durchlaufen;
+
+            while (Weitere Zeitabschnitte vorhanden?) is (ja)
+
+                :Motorleistung und\nZeitdauer auslesen;
+
+                if (Motorleistung <= 0 W?) then (ja)
+                    :Batteriestrom i = 0 A;
+                else (nein)
+                    if (Spannung <= 0 V?) then (ja)
+                        :ValueError auslösen;
+                        stop
+                    else (nein)
+                        :Elektrische Motorleistung berechnen;\nP_el = P_motor / Wirkungsgrad;
+
+                        :Batteriestrom berechnen;\ni = P_el / Spannung;
+                    endif
+                endif
+
+                if (Batterie leer und i > 0 A?) then (ja)
+                    if (Leerwarnung bereits ausgegeben?) then (ja)
+                    else (nein)
+                        :Warnung "Batterie ist leer" ausgeben;
+                        :Leerwarnung als ausgegeben markieren;
+                    endif
+
+                    :Batteriestrom i = 0 A;
+
+                else (nein)
+                    if (Batterie voll und i < 0 A?) then (ja)
+                        if (Vollwarnung bereits ausgegeben?) then (ja)
+                        else (nein)
+                            :Warnung "Batterie ist voll" ausgeben;
+                            :Vollwarnung als ausgegeben markieren;
+                        endif
+
+                        :Batteriestrom i = 0 A;
+                    endif
+                endif
+
+                :Batteriestrom im\nStromprofil speichern;
+
+                :SoC-Änderung berechnen;\ndSoC = -(i · Dauer) / Nennkapazität;
+
+                :Neuen SoC auf den Bereich\n0 bis 1 begrenzen;
+
+                :Leerlaufspannung aus\nbatteriespezifischer OCV-Kennlinie interpolieren;
+
+                :Klemmenspannung berechnen;\nU = U_OCV - R_intern · i;
+
+                :Klemmenspannung speichern;
+                :Neuen SoC speichern;
+
+            endwhile (nein)
+        }
+
+        partition "Simulationsergebnis speichern" {
+            :Nullwert vor das\nStromprofil setzen;
+
+            if (Aktuelle Batterie ist LiPo?) then (ja)
+                :LiPo-Stromprofil im\nDataFrame speichern;
+                :LiPo-Spannungsprofil im\nDataFrame speichern;
+                :LiPo-SoC-Profil im\nDataFrame speichern;
+                :LiPo-Endergebnis ausgeben;
+            else (NMC)
+                :NMC-Stromprofil im\nDataFrame speichern;
+                :NMC-Spannungsprofil im\nDataFrame speichern;
+                :NMC-SoC-Profil im\nDataFrame speichern;
+                :NMC-Endergebnis ausgeben;
+            endif
+        }
+
+    repeat while (NMC-Simulation noch nicht durchgeführt?) is (ja)
+    ->nein;
+}
+
+stop
+
+@enduml
