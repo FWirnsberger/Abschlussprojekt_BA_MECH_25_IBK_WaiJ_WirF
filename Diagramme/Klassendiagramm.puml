@@ -1,0 +1,386 @@
+@startuml
+
+title Klassendiagramm des E-Bike-Simulationsprogramms
+
+'============================================================
+' DARSTELLUNG
+'============================================================
+
+left to right direction
+
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment left
+skinparam nodesep 65
+skinparam ranksep 80
+
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    FontColor Black
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor White
+    BorderColor Black
+    FontColor Black
+}
+
+skinparam note {
+    BackgroundColor White
+    BorderColor Black
+}
+
+hide circle
+hide empty members
+
+'============================================================
+' MODELLE
+'============================================================
+
+package "src.models" {
+
+    class GPSPoint {
+        .. Attribute ..
+        - _lat: float
+        - _lon: float
+        - _ele: float
+        - _time: datetime
+        - _temp: float
+
+        .. Konstruktor ..
+        + __init__(lat: float, lon: float, ele: float, time: datetime, temp: float)
+
+        .. Methoden ..
+        + get_distance_to(other: GPSPoint): float
+        + get_time_difference_to(other: GPSPoint): float
+
+        .. Properties ..
+        + lat: float
+        + lon: float
+        + ele: float
+    }
+
+
+    class EBike {
+        .. Attribute ..
+        + rider_mass: float
+        + bike_mass: float
+        + rider_power_w: float
+        + cw_a: float
+        + wheel_diameter_inch: float
+        + battery: BatteryBase | None
+        + motor: Motor | None
+
+        .. Konstruktor ..
+        + __init__(rider_mass: float, bike_mass: float, rider_power_w: float, cw_a: float, wheel_diameter_inch: float)
+
+        .. Methoden ..
+        + get_total_mass(): float
+        + get_wheel_radius_m(): float
+    }
+
+
+    class Motor {
+        .. Attribute ..
+        + motor_constant: float
+        + efficiency: float
+
+        .. Konstruktor ..
+        + __init__(motor_constant: float, efficiency: float)
+
+        .. Methoden ..
+        + get_torque_from_power(motor_power: float, speed: float, wheel_radius: float): float
+        + get_current(torque: float): float
+        + get_current_draw(power: float, voltage: float): float
+    }
+
+
+    abstract class BatteryBase {
+        .. Attribute ..
+        + C_nom: float
+        + soc: float
+        + R_int: float
+        + Vmin: float
+        + Vmax: float
+        + Vnom: float
+
+        .. Konstruktor ..
+        {abstract} + __init__(capacity_nom_Ah: float, initial_soc: float)
+
+        .. Methoden ..
+        {abstract} + apply_current(current: float, duration: float): None
+        {abstract} + voltage(current: float): float
+    }
+
+
+    class BatteryPack {
+        .. Attribute ..
+        + C_nom: float
+        + soc: float
+        + R_int: float
+        + Vmin: float
+        + Vmax: float
+        + Vnom: float
+
+        .. Konstruktor ..
+        + __init__(capacity_nom_Ah: float, internal_resistance_mOhm: float, initial_soc: float, Vmin: float, Vmax: float, Vnom: float)
+
+        .. Methoden ..
+        + apply_current(current: float, duration: float): None
+        + voltage(current: float): float
+        + is_empty(): bool
+        + is_full(): bool
+        + __str__(): str
+    }
+
+
+    class BatteryLiPo {
+        .. Attribute ..
+        + soc_curve: list[float]
+        + ocv_curve: list[float]
+
+        .. Konstruktor ..
+        + __init__(capacity_nom_Ah: float, initial_soc: float)
+
+        .. Methoden ..
+        + voltage(current: float): float
+    }
+
+
+    class BatteryNMC {
+        .. Attribute ..
+        + soc_curve: list[float]
+        + ocv_curve: list[float]
+
+        .. Konstruktor ..
+        + __init__(capacity_nom_Ah: float, initial_soc: float)
+
+        .. Methoden ..
+        + voltage(current: float): float
+    }
+}
+
+'============================================================
+' BERECHNUNGEN
+'============================================================
+
+package "src.calculations" {
+
+    class GeoUtils <<utility>> {
+        .. Methoden ..
+        {static} + haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float): float
+    }
+
+
+    class RouteData {
+        .. Attribute ..
+        + file_path: str
+        + data: DataFrame | None
+        - _points: list[GPSPoint]
+
+        .. Konstruktor ..
+        + __init__(file_path: str)
+
+        .. Datenaufbereitung ..
+        + load_data(): None
+        + calculate_kinematics(): None
+        + filter_speed(window_size: int): None
+        + calculate_acceleration(max_acceleration_m_s2: float): None
+
+        .. Fahrtdaten ..
+        + calculate_total_distance(): float
+        + calculate_total_time(): float
+        + calculate_average_speed(total_distance: float, total_time: float): float
+        + calculate_total_elevation(): tuple[float, float]
+
+        .. Erweiterungen ..
+        + calculate_air_density(): None
+        + calculate_orientation(): None
+
+        .. Hilfsmethoden ..
+        - _bearing_to_orientation(bearing: float): str
+    }
+
+
+    class EBikePhysics {
+        .. Attribute ..
+        + ebike: EBike
+        + rho: float
+        + g: float
+
+        .. Konstruktor ..
+        + __init__(ebike: EBike)
+
+        .. Methoden ..
+        + calculate_power(speed: float, acceleration: float, slope: float, air_density: float | None): float
+        + split_power(total_power: float): tuple[float, float]
+        + calculate_max_power(power_profile: list[float]): float
+    }
+
+
+    class BatterySizing {
+        .. Attribute ..
+        + nominal_voltage_v: float
+        + reserve_factor: float
+
+        .. Konstruktor ..
+        + __init__(nominal_voltage_v: float, reserve_factor: float)
+
+        .. Methoden ..
+        + calculate_energy_requirement(motor_power_profile: list[float], duration_profile: list[float], motor_efficiency: float): float
+        + calculate_required_energy(energy_requirement_wh: float): float
+        + calculate_required_capacity_ah(required_energy_wh: float): float
+    }
+}
+
+'============================================================
+' SIMULATION
+'============================================================
+
+package "src.simulation" {
+
+    class EBikeSimulator {
+        .. Attribute ..
+        + e_bike: EBike
+        + battery: BatteryBase
+        + e_motor: Motor
+        + voltage_profile: list[float]
+        + ampere_profile: list[float]
+        + soc_profile: list[float]
+
+        .. Konstruktor ..
+        + __init__(e_bike: EBike, battery: BatteryBase, e_motor: Motor)
+
+        .. Methoden ..
+        + simulate(motor_power_profile: list[float], duration_profile: list[float]): None
+    }
+}
+
+'============================================================
+' BERICHTERSTELLUNG
+'============================================================
+
+package "src.reporting" {
+
+    class PlotGenerator {
+        .. Attribute ..
+        + data: DataFrame
+        + output_folder: Path
+
+        .. Konstruktor ..
+        + __init__(data: DataFrame, output_folder: str)
+
+        .. Hilfsmethoden ..
+        + get_time_minutes(): Series
+
+        .. Diagramme ..
+        + create_speed_plot(): Path
+        + create_acceleration_plot(): Path
+        + create_power_plot(): Path
+        + create_motor_torque_plot(): Path
+        + create_motor_current_plot(): Path
+        + create_soc_plot(): Path
+        + create_voltage_plot(): Path
+        + create_elevation_plot(): Path
+        + create_air_density_plot(): Path
+
+        .. Karte ..
+        + create_route_map(): Path
+    }
+
+
+    class ReportGenerator {
+        .. Attribute ..
+        + output_directory: Path
+        + title: str
+        + figures: list[dict[str, str]]
+        + summary: dict[str, str]
+
+        .. Konstruktor ..
+        + __init__(output_directory: str, title: str)
+
+        .. Berichtsdaten ..
+        + add_summary_value(name: str, value: str): None
+        + add_figure(image_path: Path, caption: str, label: str): None
+
+        .. Berichtserstellung ..
+        + create_tex_file(): Path
+        + create_latex_content(): str
+        + export_pdf(tex_path: Path): Path
+    }
+}
+
+class Main <<module>> {
+    .. Funktionen ..
+    + main(): None
+}
+
+
+
+'============================================================
+' VERERBUNG
+'============================================================
+
+BatteryBase <|-- BatteryPack
+BatteryPack <|-- BatteryLiPo
+BatteryPack <|-- BatteryNMC
+
+'============================================================
+' DIREKTE OBJEKTBEZIEHUNGEN
+'============================================================
+
+RouteData "1" *-- "0..*" GPSPoint
+
+GPSPoint ..> GeoUtils
+
+EBikePhysics --> EBike
+
+EBikeSimulator --> EBike
+EBikeSimulator --> Motor
+EBikeSimulator --> BatteryBase
+
+EBike --> Motor
+EBike --> BatteryBase
+
+'============================================================
+' DATENABHÄNGIGKEITEN
+'============================================================
+
+RouteData ..> EBikePhysics
+RouteData ..> PlotGenerator
+
+BatterySizing ..> BatteryLiPo
+BatterySizing ..> BatteryNMC
+
+PlotGenerator ..> ReportGenerator
+
+'============================================================
+' UNSICHTBARE LINIEN FÜR EINE SAUBERE ANORDNUNG
+'============================================================
+
+GPSPoint -[hidden]right-> EBike
+EBike -[hidden]right-> Motor
+Motor -[hidden]right-> BatteryBase
+
+GeoUtils -[hidden]right-> RouteData
+RouteData -[hidden]right-> EBikePhysics
+EBikePhysics -[hidden]right-> BatterySizing
+
+EBikeSimulator -[hidden]right-> PlotGenerator
+PlotGenerator -[hidden]right-> ReportGenerator
+
+RouteData -[hidden]down-> GPSPoint
+EBikePhysics -[hidden]down-> EBike
+BatterySizing -[hidden]down-> BatteryBase
+
+EBikeSimulator -[hidden]down-> EBikePhysics
+PlotGenerator -[hidden]down-> RouteData
+ReportGenerator -[hidden]down-> BatterySizing
+
+
+
+@enduml

@@ -1,0 +1,179 @@
+@startuml Aktivitaetsdiagramm_gesamt_WaiJ_WirF
+title Gesamtablauf des E-Bike-Simulationsprogramms
+
+skinparam shadowing false
+skinparam activity {
+    BackgroundColor White
+    BorderColor Black
+    DiamondBackgroundColor White
+    DiamondBorderColor Black
+    ArrowColor Black
+}
+
+start
+
+partition "Programmstart" {
+    :Logging konfigurieren;
+
+    if (__name__ == "__main__"?) then (ja)
+        :main() aufrufen;
+    else (nein)
+        stop
+    endif
+}
+
+partition "Routendaten laden und aufbereiten" {
+    :CSV-Dateipfad festlegen;
+    :RouteData-Objekt erstellen;
+    :CSV-Daten laden;
+
+    :Für jede CSV-Zeile ein\nGPSPoint-Objekt erstellen;
+
+    :Teilstrecken berechnen;
+    :Zeitdifferenzen berechnen;
+    :Rohgeschwindigkeiten berechnen;
+    :Steigungen berechnen;
+
+    :Geschwindigkeit mit\nMedianfilter glätten;
+    :Beschleunigung aus gefilterter\nGeschwindigkeit berechnen;
+    :Beschleunigung auf ±1,0 m/s² begrenzen;
+
+    :Luftdichte aus Höhe und\nTemperatur berechnen;
+    :Durchschnittliche, minimale und\nmaximale Luftdichte bestimmen;
+
+    :Orientierung zwischen den\nGPS-Punkten berechnen;
+}
+
+partition "Statische Fahrtdaten" {
+    :Gesamtdistanz berechnen;
+    :Distanz von m in km umrechnen;
+
+    :Gesamtfahrzeit berechnen;
+    :Fahrzeit als HH:MM:SS formatieren;
+
+    :Durchschnittsgeschwindigkeit berechnen;
+    :Geschwindigkeit von m/s\nin km/h umrechnen;
+
+    :Gesamtanstieg und\nGesamtabstieg berechnen;
+
+    :Fahrtdaten in der\nKonsole ausgeben;
+}
+
+partition "E-Bike-Leistungssimulation" {
+    :EBike-Objekt erstellen;
+    note right
+      Fahrer: 70 kg
+      Fahrrad: 10 kg
+      Fahrerleistung: 100 W
+    end note
+
+    :Motor-Objekt erstellen;
+    note right
+      Motorkonstante: 1,5 Nm/A
+      Wirkungsgrad: 85 %
+    end note
+
+    :EBikePhysics-Objekt erstellen;
+    :Leistungs-, Drehmoment-, Strom-\nund Zeitprofile initialisieren;
+    :Radradius berechnen;
+
+    :Alle Streckenabschnitte ab\nIndex 1 durchlaufen;
+
+    while (Weitere Streckenabschnitte vorhanden?) is (ja)
+        :Geschwindigkeit, Beschleunigung,\nSteigung, Zeitdauer und\nLuftdichte auslesen;
+
+        :Mechanische Gesamtleistung berechnen;
+        :Gesamtleistung auf Fahrer\nund Motor aufteilen;
+        :Motordrehmoment aus\nMotorleistung berechnen;
+        :Motorstrom aus\nMotordrehmoment berechnen;
+
+        :Ergebnisse in Profilen speichern;
+    endwhile (nein)
+
+    :Leistungs-, Drehmoment- und\nMotorstromprofile im DataFrame speichern;
+
+    :Maximale Gesamtleistung berechnen;
+    :Maximale Fahrerleistung berechnen;
+    :Maximale Motorleistung berechnen;
+    :Maximales Motordrehmoment bestimmen;
+    :Maximalen Motorstrom bestimmen;
+
+    :Leistungsdaten in der\nKonsole ausgeben;
+}
+
+partition "Batterieauslegung" {
+    :BatterySizing-Objekt erstellen;
+    note right
+      Nennspannung: 37 V
+      Reserve: 20 %
+    end note
+
+    :Elektrischen Energiebedarf\nder Strecke berechnen;
+    :20 % Energiereserve hinzufügen;
+    :Erforderliche Kapazität\nin Ah berechnen;
+
+    :Ergebnisse der Batterieauslegung\nausgeben;
+
+    :LiPo-Batterie mit berechneter\nKapazität erstellen;
+    :NMC-Batterie mit berechneter\nKapazität erstellen;
+}
+
+partition "Batteriesimulationen" {
+    :EBikeSimulator für\nLiPo erstellen;
+    :LiPo-Batteriesimulation durchführen;
+    :LiPo-Strom, Spannung und SoC\nim DataFrame speichern;
+    :LiPo-Endergebnis ausgeben;
+
+    :EBikeSimulator für\nNMC erstellen;
+    :NMC-Batteriesimulation durchführen;
+    :NMC-Strom, Spannung und SoC\nim DataFrame speichern;
+    :NMC-Endergebnis ausgeben;
+}
+
+partition "Grafiken erstellen" {
+    :PlotGenerator erstellen;
+
+    fork
+        :Geschwindigkeitsdiagramm erstellen;
+    fork again
+        :Beschleunigungsdiagramm erstellen;
+    fork again
+        :Leistungsdiagramm erstellen;
+    fork again
+        :Motordrehmomentdiagramm erstellen;
+    fork again
+        :Motorstromdiagramm erstellen;
+    fork again
+        :SoC-Diagramm erstellen;
+    fork again
+        :Spannungsdiagramm erstellen;
+    fork again
+        :Höhenprofil erstellen;
+    fork again
+        :Luftdichtediagramm erstellen;
+    fork again
+        :Folium-Routenkarte erstellen;
+    end fork
+}
+
+partition "Bericht erstellen" {
+    :ReportGenerator erstellen;
+    :Erzeugte Grafiken zum\nBericht hinzufügen;
+    :Kennwerte zur Zusammenfassung hinzufügen;
+
+    :LaTeX-Inhalt erzeugen;
+    :report.tex speichern;
+
+    :pdflatex starten;
+
+    if (pdflatex vorhanden und\nKompilierung erfolgreich?) then (ja)
+        :report.pdf erstellen;
+        :Pfad des PDF-Berichts ausgeben;
+    else (nein)
+        :RuntimeError auslösen;
+    endif
+}
+
+stop
+
+@enduml

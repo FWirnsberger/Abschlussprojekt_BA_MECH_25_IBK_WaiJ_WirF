@@ -1,0 +1,125 @@
+@startuml
+title Ablauf der E-Bike-Leistungssimulation
+
+skinparam shadowing false
+skinparam activity {
+    BackgroundColor White
+    BorderColor Black
+    DiamondBackgroundColor White
+    DiamondBorderColor Black
+    ArrowColor Black
+}
+
+start
+
+partition "Initialisierung" {
+    :EBike erstellen;
+    note right
+      Gesamtmasse =
+      Fahrermasse + Fahrradmasse
+    end note
+
+    :Motor erstellen;
+    :EBikePhysics erstellen;
+
+    :Leistungsprofile initialisieren;
+    :Drehmomentprofil initialisieren;
+    :Motorstromprofil initialisieren;
+    :Zeitprofil initialisieren;
+
+    :Radradius aus dem\nRaddurchmesser berechnen;
+
+    :Index i = 1 setzen;
+}
+
+partition "Streckenabschnitt einlesen" {
+    while (i < Anzahl der Routendaten?) is (ja)
+
+        :Geschwindigkeit speed auslesen;
+        :Beschleunigung acceleration auslesen;
+        :Steigung slope auslesen;
+        :Zeitdauer dt auslesen;
+        :Luftdichte air_density auslesen;
+
+        :dt im Zeitprofil speichern;
+
+        partition "Mechanische Gesamtleistung" {
+            :Gesamtmasse des E-Bikes bestimmen;
+
+            :Beschleunigungskraft berechnen;\nF_acc = m · a;
+
+            :Steigungskraft berechnen;\nF_slope = m · g · slope;
+
+            :Luftwiderstand berechnen;\nF_drag = 0,5 · rho · cwA · v²;
+
+            :Gesamtkraft berechnen;\nF_total = F_acc + F_slope + F_drag;
+
+            :Mechanische Gesamtleistung berechnen;\nP_total = F_total · v;
+        }
+
+        partition "Leistung aufteilen" {
+            if (Gesamtleistung > 0 W?) then (ja)
+                :Benötigte Leistung = Gesamtleistung;
+            else (nein)
+                :Benötigte Leistung = 0 W;
+                note right
+                  Negative Leistungen werden auf
+                  0 W begrenzt, da keine
+                  Rekuperation berücksichtigt wird.
+                end note
+            endif
+
+            if (Benötigte Leistung kleiner als\nmaximale Fahrerleistung?) then (ja)
+                :Fahrerleistung = benötigte Leistung;
+                :Motorleistung = 0 W;
+            else (nein)
+                :Fahrerleistung = maximale\nFahrerleistung;
+                :Motorleistung = benötigte Leistung\n- Fahrerleistung;
+            endif
+        }
+
+        partition "Motorgrößen berechnen" {
+            if (Motorleistung <= 0 W?) then (ja)
+                :Motordrehmoment = 0 Nm;
+            else (nein)
+                if (Geschwindigkeit <= 0,1 m/s?) then (ja)
+                    :Motordrehmoment = 0 Nm;
+                else (nein)
+                    :Motorkraft berechnen;\nF_motor = P_motor / v;
+                    :Motordrehmoment berechnen;\nM_motor = F_motor · Radradius;
+                endif
+            endif
+
+            :Motorstrom berechnen;\nI_motor = M_motor / Motorkonstante;
+        }
+
+        partition "Ergebnisse speichern" {
+            :Gesamtleistung speichern;
+            :Fahrerleistung speichern;
+            :Motorleistung speichern;
+            :Motordrehmoment speichern;
+            :Motorstrom speichern;
+
+            :i um 1 erhöhen;
+        }
+
+    endwhile (nein)
+}
+
+partition "Nachbearbeitung" {
+    :Nullwert für den ersten GPS-Punkt\nvor jedes Profil setzen;
+
+    :Profile als neue Spalten\nim DataFrame speichern;
+
+    :Maximale Gesamtleistung bestimmen;
+    :Maximale Fahrerleistung bestimmen;
+    :Maximale Motorleistung bestimmen;
+    :Maximales Motordrehmoment bestimmen;
+    :Maximalen Motorstrom bestimmen;
+
+    :Leistungsdaten in der\nKonsole ausgeben;
+}
+
+stop
+
+@enduml
