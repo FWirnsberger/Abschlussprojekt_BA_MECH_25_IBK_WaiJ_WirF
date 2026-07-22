@@ -220,16 +220,16 @@ Für die Umsetzung des Projekts wurden unter anderem folgende Quellen verwendet:
 - https://python4data.science/de/latest/workspace/numpy/intro.html
 - Dokumentation der verwendeten Python-Bibliotheken (NumPy, Pandas, Matplotlib, Folium, SciPy und pathlib)
 
-Zusätzlich wurden die im Rahmen der Aufgabenstellung bereitgestellten Batteriekennlinien und Simulationsparameter verwendet. :contentReference[oaicite:1]{index=1}
+Zusätzlich wurden die im Rahmen der Aufgabenstellung bereitgestellten Batteriekennlinien und Simulationsparameter verwendet. 
 
 ---
 
 # Hinweise
 
-Für die Entwicklung wurde Git zur Versionsverwaltung eingesetzt. Die Commit-Nachrichten orientieren sich am Standard der **Conventional Commits**, wodurch die Entwicklungsschritte nachvollziehbar dokumentiert werden.
+Für die Entwicklung wurde Git zur Versionsverwaltung eingesetzt. Die Commit-Nachrichten orientieren sich am Standard der Conventional Commits, wodurch die Entwicklungsschritte nachvollziehbar dokumentiert werden.
 
 Eine Rekuperation wurde nicht implementiert, da sie bei herkömmlichen E-Bikes in der Praxis nur selten eingesetzt wird und aufgrund der geringen rückgewinnbaren Bremsenergie nur einen geringen Einfluss auf die Reichweite hat.
----
+
 
 # KI-Unterstützung
 
