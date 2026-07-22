@@ -1,4 +1,4 @@
-@startuml
+@startuml Aktivitaetsdiagramm_Batterieauslegung_simulation
 title Batterieauslegung und Batteriesimulation
 
 skinparam shadowing false

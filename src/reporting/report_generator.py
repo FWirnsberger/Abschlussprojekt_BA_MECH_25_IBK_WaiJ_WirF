@@ -22,7 +22,7 @@ class ReportGenerator:
         """
         self.summary[name] = value
 
-    def add_figure(self, image_path: Path, caption: str, label: str) -> None:
+    def add_figure(self, image_path: Path, caption: str, label: str, description) -> None:
         """
         Hier wird die Grafik zum Bericht hinzugefügt
 
@@ -30,6 +30,7 @@ class ReportGenerator:
             image_path: Dateipfad der Bilddatei
             caption: Bildunterschrift
             label: Latex kennung 
+            description: kurzer Text zu jeder Grafik
         """
         absolute_path = image_path.resolve() #resolve() ist eine Methode von Pathlib, sie wandelt einen Pfad in einen absoluten Pfad um
         latex_path = absolute_path.as_posix()   #as_posix() Methoode von Pathlib, macht aus Backslash normale Schrägstriche für Latex (/ wegen Division)
@@ -39,6 +40,7 @@ class ReportGenerator:
                 "path": latex_path,
                 "caption": caption,
                 "label": label,
+                "description": description,
             }
         )
 
@@ -111,14 +113,16 @@ class ReportGenerator:
             #rf steht für raw String und f-String
             figure_code += rf"""       
 
-\begin{{figure}}[htbp]
+\subsection{{{figure["caption"]}}}
+
+{figure["description"]}
+
+\begin{{figure}}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{{{figure["path"]}}}
-    \caption{{{figure["caption"]}}}
-    \label{{{figure["label"]}}}
 \end{{figure}}
 
-\clearpage
+
 """
 
         return rf"""
@@ -142,10 +146,37 @@ class ReportGenerator:
 \author{{Jonas Waid und Fabian Wirnsberger}}
 \date{{\today}}
 
-\begin{{document}} 
+\begin{{document}}
 
-% Ein richtiges Titelblatt kann später hier ergänzt werden.
-\maketitle
+\begin{{titlepage}}
+    \centering
+
+    \vspace*{{2cm}}
+
+    {{\Huge\bfseries E-Bikesimulator\par}}
+
+    \vspace{{0.5cm}}
+
+    {{\Large Abschlussprojekt Programmieren\par}}
+
+    \vspace{{2cm}}
+
+    {{\Large\textbf{{Projektübersicht}}\par}}
+
+    \vfill
+
+    \begin{{tabular}}{{ll}}
+        Studiengang: & BSc Mechatronik \\
+        Lehrveranstaltung: & Programmieren \\
+        Semester: & 2. Semester \\
+        Autoren: & Fabian Wirnsberger \\
+                  & Jonas Waid \\
+        Abgabedatum: & \today \\
+    \end{{tabular}}
+
+    \vfill
+
+\end{{titlepage}}
 
 \tableofcontents
 \clearpage
@@ -175,6 +206,16 @@ Größe & Wert\\
 \section{{Grafische Auswertung}}
 
 Die folgenden Diagramme zeigen ausgewählte Verläufe während der Fahrt.
+\begin{{itemize}}
+    \item Geschwindigkeitsverlauf
+    \item Beschleunigungsverlauf
+    \item Verlauf von Gesamtleistung, Fahrerleistung, Motorleistung
+    \item Motordrehmomentenverlauf
+    \item Motorstromverlauf
+    \item Verlauf, des Ladezustands
+    \item Vergleich der LiPo und NMC-Spannungsverläufe
+    \item Höhenprofil
+\end{{itemize}}
 
 {figure_code}       %hier werden die Grafiken eingefügt
 

@@ -1,29 +1,9 @@
 # Abschlussprojekt_BA_MECH_25_IBK_WaiJ_WirF
-
-
-
-##Installation und Start
-Vorraussetzungen:
-Python 3.14.3
-MikTex (mit pdflatex)
-pip install -r requirements.txt 
-
-
-1. Erstellen eines _virtual environment_ mittels:
-''' bash
-python -m .....
-'''
-
-2. Erstellen des Berichts:
-''' bash
-python ./src/create_report.py
-'''
-
 # E-Bike Simulator
 
 ## Projektbeschreibung
 
-Dieses Projekt wurde im Rahmen des Abschlussprojekts der Lehrveranstaltung **Programmieren** entwickelt. Ziel ist die Auswertung realer GPS-Daten einer Fahrradfahrt sowie die Simulation eines E-Bikes. Aus den GPS-Daten werden verschiedene Fahrgrößen berechnet, die anschließend zur Bestimmung des Leistungsbedarfs und zur Simulation unterschiedlicher Batterietypen verwendet werden. Die Aufgabenstellung orientiert sich an den Vorgaben des Abschlussprojekts. :contentReference[oaicite:0]{index=0}
+Dieses Projekt wurde im Rahmen des Abschlussprojekts der Lehrveranstaltung Programmieren I von Jonas Waid und Fabian Wirnsberger entwickelt. Ziel ist die Auswertung realer GPS-Daten einer Fahrradfahrt sowie die Simulation eines E-Bikes. Aus den GPS-Daten werden verschiedene Fahrgrößen berechnet, die anschließend zur Bestimmung des Leistungsbedarfs und zur Simulation unterschiedlicher Batterietypen verwendet werden. Die Aufgabenstellung orientiert sich an den Vorgaben des Abschlussprojekts. :contentReference[oaicite:0]{index=0}
 
 ---
 
@@ -33,7 +13,7 @@ Dieses Projekt wurde im Rahmen des Abschlussprojekts der Lehrveranstaltung **Pro
 
 Folgende Software muss installiert sein:
 
-- Python 3.12 oder neuer
+- Python 3.14.3
 - Git
 - MiKTeX (für die automatische Erstellung des PDF-Berichts)
 

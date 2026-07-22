@@ -319,13 +319,18 @@ def main():
     report_generator.add_figure(                #die erstellte Geschwindigkeitsgrafik wird hinzugefügt
         image_path=speed_plot_path,
         caption="Geschwindigkeitsverlauf während der gesamten Fahrt.",
-        label="fig:speed-profile"
+        label="fig:speed-profile",
+        description=("Die folgende Abbildung zeigt den Geschwindigkeitsverlauf entlang der gesamten Strecke. "
+        "Zusätzlich sind die maximale Geschwindigkeit sowie die Durchschnittsgeschwindigkeit hervorgehoben. "
+        "Dadurch können sowohl schnelle als auch langsame Streckenabschnitte leicht identifiziert werden.")
     )
         # Beschleunigungsverlauf
     report_generator.add_figure(
         image_path=acceleration_plot_path,
         caption="Beschleunigungsverlauf während der gesamten Fahrt.",
-        label="fig:acceleration-profile"
+        label="fig:acceleration-profile",
+        description=("Der Beschleunigungsverlauf zeigt die Änderungen der Geschwindigkeit während der Fahrt. "
+        "Positive Werte kennzeichnen Beschleunigungsphasen, während negative Werte auf Verzögerungen oder Bremsvorgänge hinweisen.")
     )
 
     # Leistungsverlauf
@@ -335,49 +340,64 @@ def main():
             "Verlauf der mechanischen Gesamtleistung sowie der "
             "Fahrer- und Motorleistung."
         ),
-        label="fig:power-profile"
+        label="fig:power-profile",
+        description=("Die Abbildung zeigt die vom Fahrer eingebrachte Leistung, die vom Motor bereitgestellte Leistung sowie die daraus resultierende Gesamtleistung. "
+        "Dadurch wird ersichtlich, wie sich die Antriebsleistung während der Fahrt zwischen Fahrer und Motor aufteilt.")
     )
 
     # Motordrehmoment
     report_generator.add_figure(
         image_path=motor_torque_plot_path,
         caption="Verlauf des vom Motor erzeugten Drehmoments.",
-        label="fig:motor-torque-profile"
+        label="fig:motor-torque-profile",
+        description=("Das Motordrehmoment wurde aus der Motorleistung und der aktuellen Fahrgeschwindigkeit berechnet. "
+        "Hohe Drehmomente treten insbesondere bei niedrigen Geschwindigkeiten oder in steilen Streckenabschnitten auf.")
     )
 
     # Motorstrom
     report_generator.add_figure(
         image_path=motor_current_plot_path,
         caption="Verlauf des aus dem Motordrehmoment berechneten Motorstroms.",
-        label="fig:motor-current-profile"
+        label="fig:motor-current-profile",
+        description=("DDie folgende Grafik zeigt den Strombedarf des Motors während der gesamten Simulation. "
+        "Der Motorstrom steigt insbesondere bei hohen Leistungsanforderungen an und ermöglicht Rückschlüsse auf die elektrische Belastung des Antriebssystems.")
     )
 
     # Ladezustand
     report_generator.add_figure(
         image_path=soc_plot_path,
         caption="Vergleich des Ladezustands von LiPo- und NMC-Batterie.",
-        label="fig:soc-profile"
+        label="fig:soc-profile",
+        description=("Die Abbildung zeigt den Verlauf des Ladezustands der LiPo- und der NMC-Batterie während der Fahrt. "
+        "Der kontinuierliche Abfall des Ladezustands verdeutlicht den Energieverbrauch des E-Bikes entlang der Strecke.")
     )
 
     # Batteriespannung
     report_generator.add_figure(
         image_path=voltage_plot_path,
         caption="Vergleich der Spannungsverläufe von LiPo- und NMC-Batterie.",
-        label="fig:voltage-profile"
+        label="fig:voltage-profile",
+        description=("Die Batteriespannung der LiPo- und der NMC-Batterie wird in Abhängigkeit vom Ladezustand dargestellt. "
+        "Mit zunehmender Entladung sinkt die Klemmenspannung entsprechend der hinterlegten Kennlinien." 
+        "Die Abbildung zeigt den Spannungsverlauf der LiPo- und der NMC-Batterie während der Simulation. Die Spannungsänderung folgt dem Ladezustand und erlaubt einen direkten Vergleich beider Batterien.")
     )
 
     # Höhenprofil
     report_generator.add_figure(
         image_path=elevation_plot_path,
         caption="Höhenprofil entlang der zurückgelegten Strecke.",
-        label="fig:elevation-profile"
+        label="fig:elevation-profile",
+        description=("Das Höhenprofil stellt den Verlauf der Streckenhöhe dar. "
+        "Durch die farbliche Darstellung der Steigung werden Anstiege und Gefällestrecken unmittelbar sichtbar und erleichtern die Interpretation der Strecke.")
     )
 
     #Luftdichte
     report_generator.add_figure(
         image_path=air_density_plot_path,
         caption=("Berechneter Verlauf der Luftdichte entlang der Strecke in Abhängigkeit von Höhe und Umgebungstemperatur."),
-        label="fig:air-density-profile"
+        label="fig:air-density-profile",
+        description=("Die Luftdichte wurde aus der Höhe und der gemessenen Umgebungstemperatur entlang der Strecke berechnet. "
+        "Die berechneten Werte dienen der grafischen Auswertung und wurden in die physikalische Simulation des Luftwiderstands miteinbezogen.")
     )
 
     #----------------Kennwerte für die ZUsammenfassung hinzufügen--------------------

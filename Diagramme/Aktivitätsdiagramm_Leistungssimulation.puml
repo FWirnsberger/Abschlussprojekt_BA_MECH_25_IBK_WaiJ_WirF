@@ -1,4 +1,4 @@
-@startuml
+@startuml Aktivitaetsdiagramm_Leistungssimulation
 title Ablauf der E-Bike-Leistungssimulation
 
 skinparam shadowing false
