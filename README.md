@@ -25,12 +25,14 @@ Repository klonen:
 git clone <Repository-URL>
 cd <Projektordner>
 ```
+oder mit STRG + Shift + P und den URL-Link einfügen
 
 Virtuelle Umgebung erstellen:
 
 ```bash
 python -m venv .venv
 ```
+auf python oder py achten.
 
 Aktivieren:
 
@@ -47,6 +49,7 @@ source .venv/bin/activate
 ```
 
 Pakete installieren:
+Wichtig, prüfen ob man im selben Ordner wie die requirements Datei ist.
 
 ```bash
 pip install -r requirements.txt
@@ -131,9 +134,9 @@ Zusätzlich zu den Mindestanforderungen wurden folgende Erweiterungen umgesetzt:
 - Luftdichteberechnung aus Höhe und Temperatur
 - Berechnung der Orientierung (Nord, Ost, Süd, West)
 - Darstellung der Route auf einer interaktiven Folium-Karte, mit Anzeige der Orientierung (.html kann im Explorer in einem Browser geöffnet werden)
-- Automatische Erstellung eines PDF-Berichts mit LaTeX
-- UML-Klassendiagramm
-- Drei UML-Aktivitätsdiagramme
+- Automatische Erstellung eines PDF-Berichts mit LaTeX (unter output/report)
+- UML-Klassendiagramm (unter out/Diagramme)
+- Drei UML-Aktivitätsdiagramme (unter out/Diagramme)
 - Verwendung von Conventional Commits für die Versionsverwaltung
 - Speicherung sämtlicher Diagramme als Bilddateien
 
