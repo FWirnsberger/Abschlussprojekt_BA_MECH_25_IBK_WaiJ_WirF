@@ -15,9 +15,10 @@ class BatteryPack(BatteryBase):
         Vmax: float = 42.0,
         Vnom: float = 37.0
     ):
+        # Basisklasse initialisieren 
+        super().__init__(capacity_nom_Ah = capacity_nom_Ah, initial_soc = initial_soc)
         
-        # Kapazität in As umrechnen (Amperestunden * 3600 Sekunden)
-        self.C_nom = capacity_nom_Ah * (60.0 * 60.0)
+        # Spezifische Werte für das BatteryPack anpassen
         # SoC (State of Charge) muss zwischen 0.0 (0%) und 1.0 (100%) liegen
         self.soc = max(0.0, min(initial_soc, 1.0))
         # Innenwiderstand von Milliohm in Ohm umrechnen

@@ -14,9 +14,9 @@ from src.reporting.plot_generator import PlotGenerator
 from src.reporting.report_generator import ReportGenerator
 
 
-logging.basicConfig(format="%(asctime)s:%(levelname)s: %(message)s",
-                    level=logging.INFO,)
- #                   filename="app.log")
+logging.basicConfig(format = "%(asctime)s:%(levelname)s: %(message)s",
+                    level = logging.INFO,#)
+                    filename="app.log")
  # fürs fertige Programm in die File app.log alle Meldungen schreiben
 
 def main():
@@ -33,8 +33,8 @@ def main():
     #Teilstrecken, Geschwindigkeiten, Beschleunigungen und Steigungen berechnen
     print() #Absatz
     route.calculate_kinematics()
-    route.filter_speed(window_size=5)       #Geschwindigkeit mit Fenstergröße 5 filtern
-    route.calculate_acceleration(max_acceleration_m_s2=1.0) #Beschleunigung aus der gefilterten Geschwindigkeit berechnen und auf ±3.5 m/s² begrenzen
+    route.filter_speed(window_size = 5)       #Geschwindigkeit mit Fenstergröße 5 filtern
+    route.calculate_acceleration(max_acceleration_m_s2 = 1.0) #Beschleunigung aus der gefilterten Geschwindigkeit berechnen und auf ±3.5 m/s² begrenzen
 
     #Luftdichte berechnen
     route.calculate_air_density()
@@ -65,7 +65,7 @@ def main():
     seconds = int(total_time_s % 60)
     formated_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     #Durchschnittsgeschwindigkeit berechnen
-    average_speed_m_s= route.calculate_average_speed(total_distance_m, total_time_s)
+    average_speed_m_s = route.calculate_average_speed(total_distance_m, total_time_s)
     average_speed_km_h = average_speed_m_s * 3.6
     
     #Anstieg, Abstieg berechnen
@@ -122,24 +122,24 @@ def main():
         
         #1. Schritt: gesamte mechanische Leistung berechen (Fahrer und Motor)
         total_power = physics.calculate_power(
-            speed=speed,
-            acceleration=acceleration,
-            slope=slope,
-            air_density=air_density
+            speed = speed,
+            acceleration = acceleration,
+            slope = slope,
+            air_density = air_density
         )
 
         #2. Schritt: Leistung auf Fahrer und Motor aufteilen
-        rider_power, motor_power = physics.split_power(total_power=total_power)
+        rider_power, motor_power = physics.split_power(total_power = total_power)
 
         #3. Schritt: Motordrehmoment berechnen (hier wird nur die motor_power übergeben, ohne Fahrerleitstung)
         motor_torque = my_motor.get_torque_from_power(
-            motor_power=motor_power,
-            speed=speed,
-            wheel_radius=wheel_radius_m    
+            motor_power = motor_power,
+            speed = speed,
+            wheel_radius = wheel_radius_m    
         )
 
         #4. Schritt: Motorstrom wird über das Motormoment berechnet
-        motor_current = my_motor.get_current(torque=motor_torque)
+        motor_current = my_motor.get_current(torque = motor_torque)
 
         #Ergebnisse in den erstellten Listen speichern
         total_power_profile.append(total_power)
@@ -166,10 +166,10 @@ def main():
     max_motor_power_w = physics.calculate_max_power(motor_power_profile)
 
     #Maximales Motordrehmoment
-    max_motor_torque_nm = max(motor_torque_profile, default=0.0)
+    max_motor_torque_nm = max(motor_torque_profile, default = 0.0)
 
     #Maximaler Motorstrom
-    max_motor_current_a = max(motor_current_profile, default=0.0)
+    max_motor_current_a = max(motor_current_profile, default = 0.0)
 
 #Maximalwerte ausgeben
     print("\n---------- Leistungsdaten ----------")
